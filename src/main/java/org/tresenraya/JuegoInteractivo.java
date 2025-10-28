@@ -3,6 +3,7 @@ package org.tresenraya;
 import org.tresenraya.model.AlfaBeta;
 import org.tresenraya.model.Minimax;
 import org.tresenraya.model.Tablero;
+import org.tresenraya.model.VisualizadorArbol;
 
 import java.util.Scanner;
 
@@ -12,6 +13,8 @@ public class JuegoInteractivo {
     private char jugadorHumano;
     private char jugadorIA;
     private String algoritmo; // "minimax" o "alfabeta"
+    private boolean mostrarArbol; // Si se muestra el árbol de decisión
+    private String nivelDetalle; // "completo", "resumen", "ninguno"
 
     public JuegoInteractivo() {
         this.tablero = new Tablero();
@@ -27,6 +30,7 @@ public class JuegoInteractivo {
     private void mostrarBienvenida() {
         System.out.println("╔═══════════════════════════════════════╗");
         System.out.println("║    🎮 TRES EN RAYA - IA vs HUMANO 🎮  ║");
+        System.out.println("║          CON VISUALIZACIÓN 🌳         ║");
         System.out.println("╚═══════════════════════════════════════╝");
         System.out.println();
     }
@@ -56,10 +60,34 @@ public class JuegoInteractivo {
         opcion = leerOpcion(1, 2);
         algoritmo = (opcion == 1) ? "minimax" : "alfabeta";
 
+        // Elegir nivel de visualización
+        System.out.println("\n🌳 ¿Cómo quieres ver el árbol de decisión de la IA?");
+        System.out.println("1. Árbol completo (muestra todos los nodos explorados)");
+        System.out.println("2. Solo resumen (estadísticas y mejor movimiento)");
+        System.out.println("3. Sin visualización (modo rápido)");
+        System.out.print("Elige (1-3): ");
+
+        opcion = leerOpcion(1, 3);
+        switch (opcion) {
+            case 1:
+                nivelDetalle = "completo";
+                mostrarArbol = true;
+                break;
+            case 2:
+                nivelDetalle = "resumen";
+                mostrarArbol = true;
+                break;
+            case 3:
+                nivelDetalle = "ninguno";
+                mostrarArbol = false;
+                break;
+        }
+
         System.out.println("\n✅ Configuración completa:");
         System.out.println("   Tú juegas con: " + jugadorHumano);
         System.out.println("   IA juega con: " + jugadorIA);
         System.out.println("   Algoritmo: " + algoritmo.toUpperCase());
+        System.out.println("   Visualización: " + getNombreVisualizacion());
         System.out.println("\n📋 Instrucciones:");
         System.out.println("   El tablero tiene posiciones numeradas así:");
         System.out.println("   (0,0) (0,1) (0,2)");
@@ -72,6 +100,15 @@ public class JuegoInteractivo {
         // Esperar que el usuario presione Enter para continuar
         System.out.print("Presiona ENTER para comenzar...");
         scanner.nextLine();
+    }
+
+    private String getNombreVisualizacion() {
+        switch (nivelDetalle) {
+            case "completo": return "Árbol completo 🌳";
+            case "resumen": return "Solo resumen 📊";
+            case "ninguno": return "Sin árbol ⚡";
+            default: return "Desconocido";
+        }
     }
 
     private void jugar() {
@@ -120,6 +157,12 @@ public class JuegoInteractivo {
             }
 
             turnoHumano = !turnoHumano;
+
+            // Pausar para que el usuario pueda leer el árbol
+            if (!turnoHumano && nivelDetalle.equals("completo")) {
+                System.out.print("\nPresiona ENTER para continuar...");
+                scanner.nextLine();
+            }
         }
 
         // Preguntar si quiere jugar de nuevo
@@ -172,13 +215,22 @@ public class JuegoInteractivo {
     private void turnoIA() {
         System.out.println("🤔 La IA está pensando...");
 
+        if (mostrarArbol && nivelDetalle.equals("completo")) {
+            System.out.println("\n" + "═".repeat(60));
+            System.out.println("🌳 ÁRBOL DE DECISIÓN DE LA IA");
+            System.out.println("═".repeat(60));
+        }
+
         long tiempoInicio = System.currentTimeMillis();
         int[] movimiento;
 
+        // Configurar visualización según el nivel de detalle
+        boolean visualizarCompleto = nivelDetalle.equals("completo");
+
         if (algoritmo.equals("minimax")) {
-            movimiento = Minimax.mejorMovimiento(tablero, jugadorIA, jugadorHumano);
+            movimiento = Minimax.mejorMovimiento(tablero, jugadorIA, jugadorHumano, visualizarCompleto);
         } else {
-            movimiento = AlfaBeta.mejorMovimientoAlfaBeta(tablero, jugadorIA, jugadorHumano);
+            movimiento = AlfaBeta.mejorMovimientoAlfaBeta(tablero, jugadorIA, jugadorHumano, visualizarCompleto);
         }
 
         long tiempoFin = System.currentTimeMillis();
@@ -186,21 +238,42 @@ public class JuegoInteractivo {
 
         tablero.hacerMovimiento(movimiento[0], movimiento[1], jugadorIA);
 
-        System.out.println("🤖 La IA juega en posición (" + movimiento[0] + ", " + movimiento[1] + ")");
-        System.out.println("⏱️  Tiempo de cálculo: " + tiempoTranscurrido + " ms");
-        System.out.println("🧠 Algoritmo usado: " + algoritmo.toUpperCase());
+        // Mostrar resultado
+        System.out.println("\n" + "─".repeat(60));
+        System.out.println("🎯 DECISIÓN DE LA IA:");
+        System.out.println("   Posición elegida: (" + movimiento[0] + ", " + movimiento[1] + ")");
+        System.out.println("   Tiempo de cálculo: " + tiempoTranscurrido + " ms");
+        System.out.println("   Algoritmo usado: " + algoritmo.toUpperCase());
+
+        // Si hay resumen, mostrarlo
+        if (mostrarArbol && (nivelDetalle.equals("completo") || nivelDetalle.equals("resumen"))) {
+            VisualizadorArbol.imprimirResumen();
+        }
+
+        System.out.println("─".repeat(60));
     }
 
     private void mostrarEstadisticas(int movimientos) {
         System.out.println("\n📊 ESTADÍSTICAS DE LA PARTIDA:");
         System.out.println("   Total de movimientos: " + movimientos);
         System.out.println("   Algoritmo de IA: " + algoritmo.toUpperCase());
+        System.out.println("   Nivel de visualización: " + getNombreVisualizacion());
     }
 
     private int leerOpcion(int min, int max) {
         while (true) {
             try {
+                if (!scanner.hasNextLine()) {
+                    System.err.println("❌ Error: No hay entrada disponible");
+                    System.exit(1);
+                }
                 String input = scanner.nextLine().trim();
+
+                if (input.isEmpty()) {
+                    System.out.print("❌ No ingresaste nada. Elige entre " + min + " y " + max + ": ");
+                    continue;
+                }
+
                 int opcion = Integer.parseInt(input);
                 if (opcion >= min && opcion <= max) {
                     return opcion;
@@ -208,6 +281,10 @@ public class JuegoInteractivo {
                 System.out.print("❌ Opción inválida. Elige entre " + min + " y " + max + ": ");
             } catch (NumberFormatException e) {
                 System.out.print("❌ Entrada inválida. Elige entre " + min + " y " + max + ": ");
+            } catch (Exception e) {
+                System.err.println("❌ Error inesperado: " + e.getMessage());
+                e.printStackTrace();
+                System.exit(1);
             }
         }
     }

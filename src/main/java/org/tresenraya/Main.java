@@ -24,9 +24,11 @@ public class Main {
 
             switch (opcion) {
                 case 1:
+                    scanner.close(); // Cerrar este scanner
                     JuegoInteractivo juego = new JuegoInteractivo();
                     juego.iniciar();
-                    break;
+                    return; // Salir después del juego
+
                 case 2:
                     ejecutarDemostracion();
                     break;
