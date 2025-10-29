@@ -4,6 +4,7 @@ import org.tresenraya.model.AlfaBeta;
 import org.tresenraya.model.Minimax;
 import org.tresenraya.model.Tablero;
 import org.tresenraya.model.VisualizadorArbol;
+import org.tresenraya.VisualizadorArbolGrafico; // ← AGREGAR ESTE
 
 import javax.swing.*;
 import java.awt.*;
@@ -238,43 +239,45 @@ public class JuegoGUI extends JFrame {
     }
 
     private void jugarIA() {
-        agregarLog("\n🤖 Turno de la IA...");
-        lblEstado.setText("🤔 La IA está pensando...");
+    agregarLog("\n🤖 Turno de la IA...");
+    lblEstado.setText("🤔 La IA está pensando...");
 
-        VisualizadorArbol.reiniciar();
+    VisualizadorArbol.reiniciar();
 
-        long inicio = System.currentTimeMillis();
-        int[] mov;
+    long inicio = System.currentTimeMillis();
+    int[] mov;
 
-        if (algoritmo.equals("minimax")) {
-            mov = Minimax.mejorMovimiento(tablero, jugadorIA, jugadorHumano, mostrarArbol);
-        } else {
-            mov = AlfaBeta.mejorMovimientoAlfaBeta(tablero, jugadorIA, jugadorHumano, mostrarArbol);
-        }
-
-        long tiempo = System.currentTimeMillis() - inicio;
-        tiempoTotal += tiempo;
-
-        tablero.hacerMovimiento(mov[0], mov[1], jugadorIA);
-        movimientos++;
-
-        nodosExplorados = VisualizadorArbol.getNodosExplorados();
-        nodosPoados = VisualizadorArbol.getNodosPodados();
-
-        agregarLog("🤖 IA jugó en (" + mov[0] + ", " + mov[1] + ")");
-        agregarLog("   ⏱️ Tiempo: " + tiempo + " ms");
-        agregarLog("   📊 Nodos explorados: " + nodosExplorados);
-        if (nodosPoados > 0) {
-            agregarLog("   ✂️ Nodos podados: " + nodosPoados);
-        }
-
-        actualizarTablero();
-
-        if (verificarFinJuego()) return;
-
-        turnoHumano = true;
-        actualizarEstado();
+    // ⭐ CAMBIO: Siempre pasar TRUE para construir el árbol
+    // El parámetro controla si se IMPRIME en consola, pero necesitamos construirlo siempre
+    if (algoritmo.equals("minimax")) {
+        mov = Minimax.mejorMovimiento(tablero, jugadorIA, jugadorHumano, true); // ← Cambiar aquí
+    } else {
+        mov = AlfaBeta.mejorMovimientoAlfaBeta(tablero, jugadorIA, jugadorHumano, true); // ← Cambiar aquí
     }
+
+    long tiempo = System.currentTimeMillis() - inicio;
+    tiempoTotal += tiempo;
+
+    tablero.hacerMovimiento(mov[0], mov[1], jugadorIA);
+    movimientos++;
+
+    nodosExplorados = VisualizadorArbol.getNodosExplorados();
+    nodosPoados = VisualizadorArbol.getNodosPodados();
+
+    agregarLog("🤖 IA jugó en (" + mov[0] + ", " + mov[1] + ")");
+    agregarLog("   ⏱️ Tiempo: " + tiempo + " ms");
+    agregarLog("   📊 Nodos explorados: " + nodosExplorados);
+    if (nodosPoados > 0) {
+        agregarLog("   ✂️ Nodos podados: " + nodosPoados);
+    }
+
+    actualizarTablero();
+
+    if (verificarFinJuego()) return;
+
+    turnoHumano = true;
+    actualizarEstado();
+}
 
     private void actualizarTablero() {
         char[][] matriz = tablero.getMatriz();
@@ -398,14 +401,16 @@ public class JuegoGUI extends JFrame {
         }
     }
 
-    private void toggleArbol() {
-        mostrarArbol = !mostrarArbol;
-        agregarLog((mostrarArbol ? "✅ Activada" : "❌ Desactivada") + " visualización del árbol");
+private void toggleArbol() {
+    if (VisualizadorArbol.getRaiz() != null) {
+        VisualizadorArbolGrafico.mostrar(algoritmo);
+    } else {
         JOptionPane.showMessageDialog(this,
-                "Visualización del árbol en consola: " + (mostrarArbol ? "ACTIVADA" : "DESACTIVADA"),
-                "Configuración",
+                "Aún no hay árbol generado.\nLa IA debe jugar al menos una vez.",
+                "Sin datos",
                 JOptionPane.INFORMATION_MESSAGE);
     }
+}
 
     private void agregarLog(String mensaje) {
         txtLog.append(mensaje + "\n");

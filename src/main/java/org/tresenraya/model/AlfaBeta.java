@@ -40,6 +40,9 @@ public class AlfaBeta {
                                 "α=" + alpha + " β=" + beta +
                                         (mejor < valor ? " ⬆️ MEJOR" : ""));
 
+                        // ⭐ AGREGAR AQUÍ - Registrar nodo para visualización gráfica
+                        VisualizadorArbol.registrarNodo(profundidad, "MAX", i, j, jugador, valor, alpha, beta);
+
                         mejor = Math.max(mejor, valor);
                         alpha = Math.max(alpha, mejor);
 
@@ -66,6 +69,9 @@ public class AlfaBeta {
                         VisualizadorArbol.imprimirNodo(profundidad, "MIN", i, j, oponente, valor,
                                 "α=" + alpha + " β=" + beta +
                                         (peor > valor ? " ⬇️ PEOR" : ""));
+
+                        // ⭐ AGREGAR AQUÍ - Registrar nodo para visualización gráfica
+                        VisualizadorArbol.registrarNodo(profundidad, "MIN", i, j, oponente, valor, alpha, beta);
 
                         peor = Math.min(peor, valor);
                         beta = Math.min(beta, peor);
