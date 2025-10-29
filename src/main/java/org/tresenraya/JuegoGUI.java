@@ -20,6 +20,7 @@ public class JuegoGUI extends JFrame {
     private char jugadorIA;
     private String algoritmo;
     private boolean mostrarArbol;
+    private boolean usarSimetria;
     private boolean turnoHumano;
 
     private JButton[][] botones;
