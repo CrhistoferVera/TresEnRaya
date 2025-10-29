@@ -6,22 +6,31 @@ public class Minimax {
                               char jugador, char oponente, int filaJugada, int colJugada) {
 
         VisualizadorArbol.incrementarNodos();
+        VisualizadorArbol.iniciarNodo(
+                filaJugada >= 0 ? new int[]{filaJugada, colJugada} : null,
+                esMax,
+                Integer.MIN_VALUE,
+                Integer.MAX_VALUE
+        );
 
         // Verificar estados terminales
         if (estado.hayGanador(jugador)) {
             int valor = 10 - profundidad;
             VisualizadorArbol.imprimirEstadoTerminal(profundidad, "Victoria de " + jugador, valor);
+            VisualizadorArbol.finalizarNodo(valor);
             return valor;
         }
 
         if (estado.hayGanador(oponente)) {
             int valor = profundidad - 10;
             VisualizadorArbol.imprimirEstadoTerminal(profundidad, "Victoria de " + oponente, valor);
+            VisualizadorArbol.finalizarNodo(valor);
             return valor;
         }
 
         if (estado.tableroLleno()) {
             VisualizadorArbol.imprimirEstadoTerminal(profundidad, "Empate", 0);
+            VisualizadorArbol.finalizarNodo(0);
             return 0;
         }
 
@@ -42,6 +51,7 @@ public class Minimax {
                     }
                 }
             }
+            VisualizadorArbol.finalizarNodo(mejor);
             return mejor;
         } else {
             int peor = Integer.MAX_VALUE;
@@ -60,14 +70,20 @@ public class Minimax {
                     }
                 }
             }
+            VisualizadorArbol.finalizarNodo(peor);
             return peor;
         }
     }
 
     public static int[] mejorMovimiento(Tablero t, char jugador, char oponente, boolean visualizar) {
+        return mejorMovimiento(t, jugador, oponente, visualizar, false);
+    }
+
+    public static int[] mejorMovimiento(Tablero t, char jugador, char oponente, boolean visualizar, boolean capturarArbol) {
         if (visualizar) {
             VisualizadorArbol.reiniciar();
             VisualizadorArbol.setMostrarDetalles(true);
+            VisualizadorArbol.setCapturandoArbol(capturarArbol);
             VisualizadorArbol.imprimirEncabezado("MINIMAX");
         }
 
@@ -101,6 +117,7 @@ public class Minimax {
         }
 
         if (visualizar) {
+            VisualizadorArbol.marcarMejorMovimiento(mejorMovimiento);
             VisualizadorArbol.imprimirResumen();
         }
 
@@ -109,6 +126,6 @@ public class Minimax {
 
     // Método de compatibilidad con código anterior
     public static int[] mejorMovimiento(Tablero t, char jugador, char oponente) {
-        return mejorMovimiento(t, jugador, oponente, false);
+        return mejorMovimiento(t, jugador, oponente, false, false);
     }
 }
