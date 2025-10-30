@@ -143,8 +143,8 @@ public class VisualizadorArbolMejorado {
 
     public static void imprimirNodo(int profundidad, String tipo, int fila, int col,
                                     char jugador, int valor, String extra) {
-        // ✅ CAMBIO: Solo imprimir si profundidad <= 1
-        if (!mostrarDetalles || profundidad > 1) return;
+        // ✅ CAMBIO: Solo imprimir si profundidad == 0
+        if (!mostrarDetalles || profundidad > 0) return;
 
         String indentacion = "  ".repeat(profundidad);
         String simbolo = tipo.equals("MAX") ? "▲" : "▼";
@@ -157,8 +157,8 @@ public class VisualizadorArbolMejorado {
     }
 
     public static void imprimirPoda(int profundidad, String tipo, int alpha, int beta) {
-        // ✅ CAMBIO: Solo imprimir si profundidad <= 1
-        if (!mostrarDetalles || profundidad > 1) return;
+        // ✅ CAMBIO: Solo imprimir si profundidad == 0
+        if (!mostrarDetalles || profundidad > 0) return;
 
         String indentacion = "  ".repeat(profundidad);
         System.out.println(indentacion + "✂️ PODA " + tipo + " (α=" + alpha + ", β=" + beta + ")");
@@ -167,8 +167,8 @@ public class VisualizadorArbolMejorado {
     }
 
     public static void imprimirEstadoTerminal(int profundidad, String resultado, int valor) {
-        // ✅ CAMBIO: Solo imprimir si profundidad <= 1
-        if (!mostrarDetalles || profundidad > 1) return;
+        // ✅ CAMBIO: Solo imprimir si profundidad == 0
+        if (!mostrarDetalles || profundidad > 0) return;
 
         String indentacion = "  ".repeat(profundidad);
         System.out.println(indentacion + "🏁 " + resultado + " | Valor: " + valor);

@@ -11,7 +11,8 @@ public class Minimax {
         if (estado.hayGanador(jugador)) {
             int valor = 10 - profundidad;
             VisualizadorArbolMejorado.imprimirEstadoTerminal(profundidad, "Victoria de " + jugador, valor);
-            if (mostrarTableros && profundidad <= 1) {
+            // ✅ CAMBIO: Solo profundidad 0
+            if (mostrarTableros && profundidad == 0) {
                 imprimirTableroCompacto(estado, "  ".repeat(profundidad));
             }
             return valor;
@@ -20,7 +21,8 @@ public class Minimax {
         if (estado.hayGanador(oponente)) {
             int valor = profundidad - 10;
             VisualizadorArbolMejorado.imprimirEstadoTerminal(profundidad, "Victoria de " + oponente, valor);
-            if (mostrarTableros && profundidad <= 1) {
+            // ✅ CAMBIO: Solo profundidad 0
+            if (mostrarTableros && profundidad == 0) {
                 imprimirTableroCompacto(estado, "  ".repeat(profundidad));
             }
             return valor;
@@ -28,7 +30,8 @@ public class Minimax {
 
         if (estado.tableroLleno()) {
             VisualizadorArbolMejorado.imprimirEstadoTerminal(profundidad, "Empate", 0);
-            if (mostrarTableros && profundidad <= 1) {
+            // ✅ CAMBIO: Solo profundidad 0
+            if (mostrarTableros && profundidad == 0) {
                 imprimirTableroCompacto(estado, "  ".repeat(profundidad));
             }
             return 0;
@@ -46,12 +49,10 @@ public class Minimax {
                 Tablero nuevo = new Tablero(estado.getMatriz());
                 nuevo.hacerMovimiento(i, j, jugador);
 
-                if (mostrarTableros && profundidad <= 1) {
-                    String extra = "";
-                    if (profundidad == 0) {
-                        String tipo = DetectorSimetria.clasificarMovimiento(i, j);
-                        extra = " [" + tipo + "]";
-                    }
+                // ✅ CAMBIO: Solo profundidad 0
+                if (mostrarTableros && profundidad == 0) {
+                    String tipo = DetectorSimetria.clasificarMovimiento(i, j);
+                    String extra = " [" + tipo + "]";
                     
                     String indentacion = "  ".repeat(profundidad);
                     String simbolo = "▲";
@@ -69,7 +70,8 @@ public class Minimax {
                     extra += " [" + tipo + "]";
                 }
                 
-                if (!mostrarTableros || profundidad > 1) {
+                // ✅ CAMBIO: Solo profundidad 0
+                if (!mostrarTableros || profundidad > 0) {
                     VisualizadorArbolMejorado.imprimirNodo(profundidad, "MAX", i, j, jugador, valor, extra);
                 } else {
                     String indentacion = "  ".repeat(profundidad);
@@ -88,12 +90,10 @@ public class Minimax {
                 Tablero nuevo = new Tablero(estado.getMatriz());
                 nuevo.hacerMovimiento(i, j, oponente);
 
-                if (mostrarTableros && profundidad <= 1) {
-                    String extra = "";
-                    if (profundidad == 0) {
-                        String tipo = DetectorSimetria.clasificarMovimiento(i, j);
-                        extra = " [" + tipo + "]";
-                    }
+                // ✅ CAMBIO: Solo profundidad 0
+                if (mostrarTableros && profundidad == 0) {
+                    String tipo = DetectorSimetria.clasificarMovimiento(i, j);
+                    String extra = " [" + tipo + "]";
                     
                     String indentacion = "  ".repeat(profundidad);
                     String simbolo = "▼";
@@ -111,7 +111,8 @@ public class Minimax {
                     extra += " [" + tipo + "]";
                 }
                 
-                if (!mostrarTableros || profundidad > 1) {
+                // ✅ CAMBIO: Solo profundidad 0
+                if (!mostrarTableros || profundidad > 0) {
                     VisualizadorArbolMejorado.imprimirNodo(profundidad, "MIN", i, j, oponente, valor, extra);
                 } else {
                     String indentacion = "  ".repeat(profundidad);
@@ -155,8 +156,7 @@ public class Minimax {
         if (visualizar) {
             System.out.println("\n🔍 Evaluando movimientos posibles:");
             if (mostrarTableros) {
-                System.out.println("   📊 Nivel 0: Opciones de la IA");
-                System.out.println("   📊 Nivel 1: Posibles respuestas del oponente");
+                System.out.println("   📊 Mostrando solo las opciones inmediatas de la IA");
             }
             System.out.println();
         }
