@@ -83,7 +83,8 @@ public class DemoCompleta {
         tablero.imprimir();
         
         System.out.println("\n🟢 Ejecutando Minimax con simetría y tableros...\n");
-        Minimax.mejorMovimiento(tablero, 'X', 'O', true);
+        // ✅ CAMBIO: Activar mostrarTableros=true
+        Minimax.mejorMovimiento(tablero, 'X', 'O', true, true);
     }
 
     private static void verArbolAlfaBeta(Scanner scanner) {
@@ -105,7 +106,8 @@ public class DemoCompleta {
         tablero.imprimir();
         
         System.out.println("\n🔵 Ejecutando Alfa-Beta con simetría y tableros...\n");
-        AlfaBeta.mejorMovimientoAlfaBeta(tablero, 'X', 'O', true);
+        // ✅ CAMBIO: Activar mostrarTableros=true
+        AlfaBeta.mejorMovimientoAlfaBeta(tablero, 'X', 'O', true, true, true);
     }
 
     private static void tableroPersonalizado(Scanner scanner) {
@@ -159,10 +161,11 @@ public class DemoCompleta {
         
         String alg = scanner.nextLine().trim();
         
+        // ✅ CAMBIO: Activar mostrarTableros=true
         if (alg.equals("1")) {
-            Minimax.mejorMovimiento(tablero, 'X', 'O', true);
+            Minimax.mejorMovimiento(tablero, 'X', 'O', true, true);
         } else {
-            AlfaBeta.mejorMovimientoAlfaBeta(tablero, 'X', 'O', true);
+            AlfaBeta.mejorMovimientoAlfaBeta(tablero, 'X', 'O', true, true, true);
         }
     }
 
@@ -173,17 +176,17 @@ public class DemoCompleta {
 
         Tablero tablero = new Tablero();
         
-        // Minimax
+        // Minimax (sin tableros para comparación rápida)
         System.out.println("\n🟢 Minimax...");
         long t1 = System.currentTimeMillis();
-        int[] m1 = Minimax.mejorMovimiento(tablero, 'O', 'X', false);
+        int[] m1 = Minimax.mejorMovimiento(tablero, 'O', 'X', false, false);
         int n1 = VisualizadorArbolMejorado.getNodosExplorados();
         long d1 = System.currentTimeMillis() - t1;
 
-        // Alfa-Beta
+        // Alfa-Beta (sin tableros para comparación rápida)
         System.out.println("🔵 Alfa-Beta...");
         long t2 = System.currentTimeMillis();
-        int[] m2 = AlfaBeta.mejorMovimientoAlfaBeta(tablero, 'O', 'X', false);
+        int[] m2 = AlfaBeta.mejorMovimientoAlfaBeta(tablero, 'O', 'X', false, true, false);
         int n2 = VisualizadorArbolMejorado.getNodosExplorados();
         int p2 = VisualizadorArbolMejorado.getNodosPodados();
         long d2 = System.currentTimeMillis() - t2;

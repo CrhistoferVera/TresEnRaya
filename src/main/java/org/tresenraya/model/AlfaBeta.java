@@ -2,7 +2,7 @@ package org.tresenraya.model;
 
 /**
  * Alfa-Beta con soporte para simetría y visualización de tableros
- * VERSIÓN UNIFICADA - Compatible con todo el sistema
+ * VERSIÓN CORREGIDA - Muestra tableros de profundidad 0 y 1 ANTES de recursión
  */
 public class AlfaBeta {
 
@@ -16,7 +16,8 @@ public class AlfaBeta {
         if (estado.hayGanador(jugador)) {
             int valor = 10 - profundidad;
             VisualizadorArbolMejorado.imprimirEstadoTerminal(profundidad, "Victoria de " + jugador, valor);
-            if (mostrarTableros) {
+            // Mostrar tablero terminal si estamos en profundidad <= 1
+            if (mostrarTableros && profundidad <= 1) {
                 String indentacion = "  ".repeat(profundidad);
                 imprimirTableroCompacto(estado, indentacion);
             }
@@ -26,7 +27,7 @@ public class AlfaBeta {
         if (estado.hayGanador(oponente)) {
             int valor = profundidad - 10;
             VisualizadorArbolMejorado.imprimirEstadoTerminal(profundidad, "Victoria de " + oponente, valor);
-            if (mostrarTableros) {
+            if (mostrarTableros && profundidad <= 1) {
                 String indentacion = "  ".repeat(profundidad);
                 imprimirTableroCompacto(estado, indentacion);
             }
@@ -35,7 +36,7 @@ public class AlfaBeta {
 
         if (estado.tableroLleno()) {
             VisualizadorArbolMejorado.imprimirEstadoTerminal(profundidad, "Empate", 0);
-            if (mostrarTableros) {
+            if (mostrarTableros && profundidad <= 1) {
                 String indentacion = "  ".repeat(profundidad);
                 imprimirTableroCompacto(estado, indentacion);
             }
@@ -59,6 +60,22 @@ public class AlfaBeta {
                 Tablero nuevo = new Tablero(estado.getMatriz());
                 nuevo.hacerMovimiento(i, j, jugador);
 
+                // MOSTRAR TABLERO ANTES de la recursión si profundidad <= 1
+                if (mostrarTableros && profundidad <= 1) {
+                    String extra = "α=" + alpha + " β=" + beta;
+                    if (usarSimetria && profundidad == 0) {
+                        String tipo = DetectorSimetria.clasificarMovimiento(i, j);
+                        extra += " [" + tipo + "]";
+                    }
+                    
+                    String indentacion = "  ".repeat(profundidad);
+                    String simbolo = "▲";
+                    System.out.println(indentacion + simbolo + " Prof:" + profundidad +
+                            " Mov:(" + i + "," + j + ") " +
+                            "Jugador:" + jugador + " " + extra);
+                    imprimirTableroCompacto(nuevo, indentacion);
+                }
+
                 int valor = alphabeta(nuevo, profundidad + 1, alpha, beta, false,
                         jugador, oponente, i, j, usarSimetria, mostrarTableros);
 
@@ -69,11 +86,13 @@ public class AlfaBeta {
                     extra += " [" + tipo + "]";
                 }
 
-                if (mostrarTableros) {
-                    VisualizadorArbolMejorado.imprimirNodoConTablero(nuevo, profundidad, "MAX",
-                                                                     i, j, jugador, valor, extra);
-                } else {
+                // Solo imprimir info del nodo (sin tablero) si profundidad > 1 o sin mostrarTableros
+                if (!mostrarTableros || profundidad > 1) {
                     VisualizadorArbolMejorado.imprimirNodo(profundidad, "MAX", i, j, jugador, valor, extra);
+                } else {
+                    // Ya mostramos el tablero, solo mostrar el valor
+                    String indentacion = "  ".repeat(profundidad);
+                    System.out.println(indentacion + "   → Valor: " + valor + " " + extra);
                 }
 
                 // Registrar para visualización gráfica
@@ -97,6 +116,22 @@ public class AlfaBeta {
                 Tablero nuevo = new Tablero(estado.getMatriz());
                 nuevo.hacerMovimiento(i, j, oponente);
 
+                // MOSTRAR TABLERO ANTES de la recursión si profundidad <= 1
+                if (mostrarTableros && profundidad <= 1) {
+                    String extra = "α=" + alpha + " β=" + beta;
+                    if (usarSimetria && profundidad == 0) {
+                        String tipo = DetectorSimetria.clasificarMovimiento(i, j);
+                        extra += " [" + tipo + "]";
+                    }
+                    
+                    String indentacion = "  ".repeat(profundidad);
+                    String simbolo = "▼";
+                    System.out.println(indentacion + simbolo + " Prof:" + profundidad +
+                            " Mov:(" + i + "," + j + ") " +
+                            "Jugador:" + oponente + " " + extra);
+                    imprimirTableroCompacto(nuevo, indentacion);
+                }
+
                 int valor = alphabeta(nuevo, profundidad + 1, alpha, beta, true,
                         jugador, oponente, i, j, usarSimetria, mostrarTableros);
 
@@ -107,11 +142,13 @@ public class AlfaBeta {
                     extra += " [" + tipo + "]";
                 }
 
-                if (mostrarTableros) {
-                    VisualizadorArbolMejorado.imprimirNodoConTablero(nuevo, profundidad, "MIN",
-                                                                     i, j, oponente, valor, extra);
-                } else {
+                // Solo imprimir info del nodo (sin tablero) si profundidad > 1 o sin mostrarTableros
+                if (!mostrarTableros || profundidad > 1) {
                     VisualizadorArbolMejorado.imprimirNodo(profundidad, "MIN", i, j, oponente, valor, extra);
+                } else {
+                    // Ya mostramos el tablero, solo mostrar el valor
+                    String indentacion = "  ".repeat(profundidad);
+                    System.out.println(indentacion + "   → Valor: " + valor + " " + extra);
                 }
 
                 // Registrar para visualización gráfica
@@ -132,7 +169,7 @@ public class AlfaBeta {
     private static void imprimirTableroCompacto(Tablero tablero, String indentacion) {
         char[][] matriz = tablero.getMatriz();
         for (int i = 0; i < 3; i++) {
-            System.out.print(indentacion + "                ");
+            System.out.print(indentacion + "   ");
             for (int j = 0; j < 3; j++) {
                 char c = matriz[i][j];
                 System.out.print(c == '-' ? ' ' : Character.toLowerCase(c));
@@ -177,6 +214,11 @@ public class AlfaBeta {
         int[] mejorMovimiento = {-1, -1};
 
         System.out.println("\n🔍 Evaluando movimientos posibles con poda Alfa-Beta:");
+        if (mostrarTableros) {
+            System.out.println("   📊 Nivel 0: Opciones de la IA");
+            System.out.println("   📊 Nivel 1: Posibles respuestas del oponente");
+        }
+        System.out.println();
 
         java.util.List<DetectorSimetria.Posicion> movimientos;
         if (usarSimetria) {
@@ -194,15 +236,18 @@ public class AlfaBeta {
 
             if (visualizar) {
                 String tipo = usarSimetria ? " [" + DetectorSimetria.clasificarMovimiento(i, j) + "]" : "";
-                System.out.println("\n--- Explorando movimiento (" + i + ", " + j + ")" + tipo + " ---");
+                System.out.println("═══════════════════════════════════════════");
+                System.out.println("🎯 Explorando: (" + i + ", " + j + ")" + tipo);
+                System.out.println("═══════════════════════════════════════════");
             }
 
             int valor = alphabeta(copia, 0, Integer.MIN_VALUE, Integer.MAX_VALUE,
                     false, jugador, oponente, i, j, usarSimetria, mostrarTableros);
 
             String tipo = usarSimetria ? " [" + DetectorSimetria.clasificarMovimiento(i, j) + "]" : "";
-            System.out.println("Movimiento (" + i + ", " + j + ")" + tipo + " → Valor: " + valor +
+            System.out.println("\n📌 Resultado movimiento (" + i + ", " + j + ")" + tipo + ": " + valor +
                     (valor > mejorValor ? " ⭐ NUEVO MEJOR" : ""));
+            System.out.println();
 
             if (valor > mejorValor) {
                 mejorValor = valor;

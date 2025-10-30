@@ -255,57 +255,61 @@ public class JuegoGUI extends JFrame {
         timer.start();
     }
 
-    private void jugarIA() {
-        agregarLog("\n🤖 Turno de la IA...");
-        lblEstado.setText("🤔 La IA está pensando...");
+private void jugarIA() {
+    agregarLog("\n🤖 Turno de la IA...");
+    lblEstado.setText("🤔 La IA está pensando...");
 
-        // SIEMPRE construir el árbol (para poder mostrarlo)
-        VisualizadorArbol.reiniciar();
+    // SIEMPRE construir el árbol (para poder mostrarlo)
+    VisualizadorArbol.reiniciar();
 
-        long inicio = System.currentTimeMillis();
-        int[] mov;
+    long inicio = System.currentTimeMillis();
+    int[] mov;
 
-        // SIEMPRE visualizar en consola con tableros
-        if (algoritmo.equals("minimax")) {
-            mov = Minimax.mejorMovimiento(tablero, jugadorIA, jugadorHumano, true);
-        } else {
-            mov = AlfaBeta.mejorMovimientoAlfaBeta(tablero, jugadorIA, jugadorHumano, true);
-        }
-
-        long tiempo = System.currentTimeMillis() - inicio;
-        tiempoTotal += tiempo;
-
-        tablero.hacerMovimiento(mov[0], mov[1], jugadorIA);
-        movimientos++;
-
-        nodosExplorados = VisualizadorArbol.getNodosExplorados();
-        nodosPoados = VisualizadorArbol.getNodosPodados();
-
-        agregarLog("🤖 IA jugó en (" + mov[0] + ", " + mov[1] + ")");
-        agregarLog("   ⏱️ Tiempo: " + tiempo + " ms");
-        agregarLog("   📊 Nodos explorados: " + nodosExplorados);
-        if (nodosPoados > 0) {
-            agregarLog("   ✂️ Nodos podados: " + nodosPoados);
-        }
-
-        actualizarTablero();
-
-        // MOSTRAR ÁRBOL AUTOMÁTICAMENTE si está activado
-        if (mostrarArbolAutomatico) {
-            Timer timerArbol = new Timer(500, e -> {
-                mostrarArbolGrafico();
-                ((Timer)e.getSource()).stop();
-            });
-            timerArbol.setRepeats(false);
-            timerArbol.start();
-        }
-
-        if (verificarFinJuego()) return;
-
-        turnoHumano = true;
-        actualizarEstado();
+    // ⚠️ CAMBIO CRÍTICO: Activar mostrarTableros=true
+    if (algoritmo.equals("minimax")) {
+        mov = Minimax.mejorMovimiento(tablero, jugadorIA, jugadorHumano, 
+                                      true,   // visualizar
+                                      true);  // 🎯 mostrarTableros=TRUE
+    } else {
+        mov = AlfaBeta.mejorMovimientoAlfaBeta(tablero, jugadorIA, jugadorHumano, 
+                                                true,   // visualizar
+                                                true,   // usarSimetria
+                                                true);  // 🎯 mostrarTableros=TRUE
     }
 
+    long tiempo = System.currentTimeMillis() - inicio;
+    tiempoTotal += tiempo;
+
+    tablero.hacerMovimiento(mov[0], mov[1], jugadorIA);
+    movimientos++;
+
+    nodosExplorados = VisualizadorArbol.getNodosExplorados();
+    nodosPoados = VisualizadorArbol.getNodosPodados();
+
+    agregarLog("🤖 IA jugó en (" + mov[0] + ", " + mov[1] + ")");
+    agregarLog("   ⏱️ Tiempo: " + tiempo + " ms");
+    agregarLog("   📊 Nodos explorados: " + nodosExplorados);
+    if (nodosPoados > 0) {
+        agregarLog("   ✂️ Nodos podados: " + nodosPoados);
+    }
+
+    actualizarTablero();
+
+    // MOSTRAR ÁRBOL AUTOMÁTICAMENTE si está activado
+    if (mostrarArbolAutomatico) {
+        Timer timerArbol = new Timer(500, e -> {
+            mostrarArbolGrafico();
+            ((Timer)e.getSource()).stop();
+        });
+        timerArbol.setRepeats(false);
+        timerArbol.start();
+    }
+
+    if (verificarFinJuego()) return;
+
+    turnoHumano = true;
+    actualizarEstado();
+}
     private void mostrarArbolGrafico() {
         if (VisualizadorArbol.getRaiz() != null) {
             VisualizadorArbolGrafico.mostrar(algoritmo + " + SIMETRÍA");
