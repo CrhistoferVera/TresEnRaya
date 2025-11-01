@@ -2,9 +2,14 @@ package org.tresenraya.model;
 
 /**
  * Alfa-Beta con soporte para simetría y visualización de tableros
- * VERSIÓN CORREGIDA - Muestra tableros de profundidad 0 y 1 ANTES de recursión
+ * ✅ CORREGIDO: Profundidad limitada a 2 niveles y heurística correcta
  */
 public class AlfaBeta {
+
+    // ✅ PROFUNDIDAD LIMITADA: Solo 2 movimientos (IA + oponente)
+    // Profundidad 0 = IA juega
+    // Profundidad 1 = Oponente responde → EVALUAR HEURÍSTICA
+    private static final int PROFUNDIDAD_MAX = 1;
 
     public static int alphabeta(Tablero estado, int profundidad, int alpha, int beta,
                                 boolean esMax, char jugador, char oponente, int filaJugada, int colJugada,
@@ -16,7 +21,6 @@ public class AlfaBeta {
         if (estado.hayGanador(jugador)) {
             int valor = 10 - profundidad;
             VisualizadorArbolMejorado.imprimirEstadoTerminal(profundidad, "Victoria de " + jugador, valor);
-            // Mostrar tablero terminal si estamos en profundidad <= 1
             if (mostrarTableros && profundidad <= 1) {
                 String indentacion = "  ".repeat(profundidad);
                 imprimirTableroCompacto(estado, indentacion);
@@ -43,6 +47,16 @@ public class AlfaBeta {
             return 0;
         }
 
+        // ✅ LÍMITE DE PROFUNDIDAD: Detener en profundidad 2 y usar heurística
+        if (profundidad >= PROFUNDIDAD_MAX) {
+            int valorHeuristico = Evaluador.evaluar(estado, jugador, oponente);
+            if (mostrarTableros && profundidad <= 1) {
+                String indentacion = "  ".repeat(profundidad);
+                System.out.println(indentacion + "🔍 Heurística: " + valorHeuristico);
+            }
+            return valorHeuristico;
+        }
+
         // Obtener movimientos (con o sin simetría)
         java.util.List<DetectorSimetria.Posicion> movimientos;
         if (usarSimetria) {
@@ -60,9 +74,12 @@ public class AlfaBeta {
                 Tablero nuevo = new Tablero(estado.getMatriz());
                 nuevo.hacerMovimiento(i, j, jugador);
 
+                // Calcular heurística ANTES de mostrar
+                int heuristica = Evaluador.evaluar(nuevo, jugador, oponente);
+
                 // MOSTRAR TABLERO ANTES de la recursión si profundidad <= 1
                 if (mostrarTableros && profundidad <= 1) {
-                    String extra = "α=" + alpha + " β=" + beta;
+                    String extra = "α=" + alpha + " β=" + beta + " H=" + heuristica;
                     if (usarSimetria && profundidad == 0) {
                         String tipo = DetectorSimetria.clasificarMovimiento(i, j);
                         extra += " [" + tipo + "]";
@@ -79,7 +96,7 @@ public class AlfaBeta {
                 int valor = alphabeta(nuevo, profundidad + 1, alpha, beta, false,
                         jugador, oponente, i, j, usarSimetria, mostrarTableros);
 
-                String extra = "α=" + alpha + " β=" + beta;
+                String extra = "α=" + alpha + " β=" + beta + " H=" + heuristica;
                 if (mejor < valor) extra += " ⬆️ MEJOR";
                 if (usarSimetria && profundidad == 0) {
                     String tipo = DetectorSimetria.clasificarMovimiento(i, j);
@@ -92,7 +109,8 @@ public class AlfaBeta {
                 } else {
                     // Ya mostramos el tablero, solo mostrar el valor
                     String indentacion = "  ".repeat(profundidad);
-                    System.out.println(indentacion + "   → Valor: " + valor + " " + extra);
+                    System.out.println(indentacion + "   → H=" + heuristica + " (Valor: " + valor + ")" + 
+                                     (mejor < valor ? " ⬆️ MEJOR" : ""));
                 }
 
                 // Registrar para visualización gráfica
@@ -116,9 +134,12 @@ public class AlfaBeta {
                 Tablero nuevo = new Tablero(estado.getMatriz());
                 nuevo.hacerMovimiento(i, j, oponente);
 
+                // Calcular heurística ANTES de mostrar
+                int heuristica = Evaluador.evaluar(nuevo, jugador, oponente);
+
                 // MOSTRAR TABLERO ANTES de la recursión si profundidad <= 1
                 if (mostrarTableros && profundidad <= 1) {
-                    String extra = "α=" + alpha + " β=" + beta;
+                    String extra = "α=" + alpha + " β=" + beta + " H=" + heuristica;
                     if (usarSimetria && profundidad == 0) {
                         String tipo = DetectorSimetria.clasificarMovimiento(i, j);
                         extra += " [" + tipo + "]";
@@ -135,7 +156,7 @@ public class AlfaBeta {
                 int valor = alphabeta(nuevo, profundidad + 1, alpha, beta, true,
                         jugador, oponente, i, j, usarSimetria, mostrarTableros);
 
-                String extra = "α=" + alpha + " β=" + beta;
+                String extra = "α=" + alpha + " β=" + beta + " H=" + heuristica;
                 if (peor > valor) extra += " ⬇️ PEOR";
                 if (usarSimetria && profundidad == 0) {
                     String tipo = DetectorSimetria.clasificarMovimiento(i, j);
@@ -148,7 +169,8 @@ public class AlfaBeta {
                 } else {
                     // Ya mostramos el tablero, solo mostrar el valor
                     String indentacion = "  ".repeat(profundidad);
-                    System.out.println(indentacion + "   → Valor: " + valor + " " + extra);
+                    System.out.println(indentacion + "   → H=" + heuristica + " (Valor: " + valor + ")" + 
+                                     (peor > valor ? " ⬇️ PEOR" : ""));
                 }
 
                 // Registrar para visualización gráfica
@@ -200,7 +222,7 @@ public class AlfaBeta {
             VisualizadorArbol.reiniciar();
             VisualizadorArbolMejorado.reiniciar();
             VisualizadorArbolMejorado.setMostrarDetalles(true);
-            String titulo = "ALFA-BETA";
+            String titulo = "ALFA-BETA (Profundidad " + PROFUNDIDAD_MAX + ")";
             if (usarSimetria) titulo += " CON SIMETRÍA";
             if (mostrarTableros) titulo += " + TABLEROS";
             VisualizadorArbolMejorado.imprimirEncabezado(titulo);
@@ -215,8 +237,9 @@ public class AlfaBeta {
 
         System.out.println("\n🔍 Evaluando movimientos posibles con poda Alfa-Beta:");
         if (mostrarTableros) {
-            System.out.println("   📊 Nivel 0: Opciones de la IA");
-            System.out.println("   📊 Nivel 1: Posibles respuestas del oponente");
+            System.out.println("   📊 Profundidad 0: Opciones de IA (con heurística)");
+            System.out.println("   📊 Profundidad 1: Respuestas del oponente");
+            System.out.println("   📊 Profundidad 2: Evaluar con heurística");
         }
         System.out.println();
 
@@ -236,16 +259,19 @@ public class AlfaBeta {
 
             if (visualizar) {
                 String tipo = usarSimetria ? " [" + DetectorSimetria.clasificarMovimiento(i, j) + "]" : "";
-                System.out.println("═══════════════════════════════════════════");
+                System.out.println("╔════════════════════════════════════════╗");
                 System.out.println("🎯 Explorando: (" + i + ", " + j + ")" + tipo);
-                System.out.println("═══════════════════════════════════════════");
+                System.out.println("╚════════════════════════════════════════╝");
             }
 
             int valor = alphabeta(copia, 0, Integer.MIN_VALUE, Integer.MAX_VALUE,
                     false, jugador, oponente, i, j, usarSimetria, mostrarTableros);
 
             String tipo = usarSimetria ? " [" + DetectorSimetria.clasificarMovimiento(i, j) + "]" : "";
-            System.out.println("\n📌 Resultado movimiento (" + i + ", " + j + ")" + tipo + ": " + valor +
+            int heuristica = Evaluador.evaluar(copia, jugador, oponente);
+            System.out.println("\n📌 Resultado movimiento (" + i + ", " + j + ")" + tipo);
+            System.out.println("   Heurística inmediata: " + heuristica);
+            System.out.println("   Valor después de análisis: " + valor +
                     (valor > mejorValor ? " ⭐ NUEVO MEJOR" : ""));
             System.out.println();
 
@@ -258,6 +284,8 @@ public class AlfaBeta {
 
         if (visualizar) {
             VisualizadorArbolMejorado.imprimirResumen();
+            System.out.println("\n✅ Mejor movimiento: (" + mejorMovimiento[0] + ", " + mejorMovimiento[1] + 
+                             ") con valor " + mejorValor);
         }
 
         return mejorMovimiento;

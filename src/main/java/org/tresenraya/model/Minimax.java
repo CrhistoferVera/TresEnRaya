@@ -2,39 +2,24 @@ package org.tresenraya.model;
 
 public class Minimax {
 
-    public static int minimax(Tablero estado, int profundidad, boolean esMax,
-                              char jugador, char oponente, int filaJugada, int colJugada,
-                              boolean mostrarTableros) {
+    private static final int PROFUNDIDAD_MAX = 1;
 
-        VisualizadorArbolMejorado.incrementarNodos();
+    public static int minimax(Tablero estado, int profundidad, boolean esMax, char jugador, char oponente, int filaJugada, int colJugada, boolean mostrarTableros) {
 
         if (estado.hayGanador(jugador)) {
-            int valor = 10 - profundidad;
-            VisualizadorArbolMejorado.imprimirEstadoTerminal(profundidad, "Victoria de " + jugador, valor);
-            // ✅ CAMBIO: Solo profundidad 0
-            if (mostrarTableros && profundidad == 0) {
-                imprimirTableroCompacto(estado, "  ".repeat(profundidad));
-            }
-            return valor;
+            return 1000;
         }
 
         if (estado.hayGanador(oponente)) {
-            int valor = profundidad - 10;
-            VisualizadorArbolMejorado.imprimirEstadoTerminal(profundidad, "Victoria de " + oponente, valor);
-            // ✅ CAMBIO: Solo profundidad 0
-            if (mostrarTableros && profundidad == 0) {
-                imprimirTableroCompacto(estado, "  ".repeat(profundidad));
-            }
-            return valor;
+            return  -1000;
         }
 
         if (estado.tableroLleno()) {
-            VisualizadorArbolMejorado.imprimirEstadoTerminal(profundidad, "Empate", 0);
-            // ✅ CAMBIO: Solo profundidad 0
-            if (mostrarTableros && profundidad == 0) {
-                imprimirTableroCompacto(estado, "  ".repeat(profundidad));
-            }
             return 0;
+        }
+
+        if (profundidad >= PROFUNDIDAD_MAX) {
+            return Evaluador.evaluar(estado, jugador, oponente);
         }
 
         java.util.List<DetectorSimetria.Posicion> movimientos = 
@@ -43,82 +28,27 @@ public class Minimax {
         if (esMax) {
             int mejor = Integer.MIN_VALUE;
             for (DetectorSimetria.Posicion pos : movimientos) {
-                int i = pos.fila;
-                int j = pos.col;
-                
                 Tablero nuevo = new Tablero(estado.getMatriz());
-                nuevo.hacerMovimiento(i, j, jugador);
-
-                // ✅ CAMBIO: Solo profundidad 0
-                if (mostrarTableros && profundidad == 0) {
-                    String tipo = DetectorSimetria.clasificarMovimiento(i, j);
-                    String extra = " [" + tipo + "]";
-                    
-                    String indentacion = "  ".repeat(profundidad);
-                    String simbolo = "▲";
-                    System.out.println(indentacion + simbolo + " Prof:" + profundidad +
-                            " Mov:(" + i + "," + j + ") " +
-                            "Jugador:" + jugador + extra);
-                    imprimirTableroCompacto(nuevo, indentacion);
-                }
-
-                int valor = minimax(nuevo, profundidad + 1, false, jugador, oponente, i, j, mostrarTableros);
-
-                String extra = mejor < valor ? "⬆️ MEJOR" : "";
-                if (profundidad == 0) {
-                    String tipo = DetectorSimetria.clasificarMovimiento(i, j);
-                    extra += " [" + tipo + "]";
-                }
-                
-                // ✅ CAMBIO: Solo profundidad 0
-                if (!mostrarTableros || profundidad > 0) {
-                    VisualizadorArbolMejorado.imprimirNodo(profundidad, "MAX", i, j, jugador, valor, extra);
-                } else {
-                    String indentacion = "  ".repeat(profundidad);
-                    System.out.println(indentacion + "   → Valor: " + valor + (extra.isEmpty() ? "" : " " + extra));
-                }
-                
+                nuevo.hacerMovimiento(pos.fila, pos.col, jugador);
+                int valor = minimax(nuevo, profundidad + 1, false, jugador, oponente, pos.fila, pos.col, mostrarTableros);
                 mejor = Math.max(mejor, valor);
             }
             return mejor;
         } else {
             int peor = Integer.MAX_VALUE;
             for (DetectorSimetria.Posicion pos : movimientos) {
-                int i = pos.fila;
-                int j = pos.col;
-                
                 Tablero nuevo = new Tablero(estado.getMatriz());
-                nuevo.hacerMovimiento(i, j, oponente);
+                nuevo.hacerMovimiento(pos.fila, pos.col, oponente);
+                int heuristica = Evaluador.evaluar(nuevo, jugador, oponente);
 
-                // ✅ CAMBIO: Solo profundidad 0
                 if (mostrarTableros && profundidad == 0) {
-                    String tipo = DetectorSimetria.clasificarMovimiento(i, j);
-                    String extra = " [" + tipo + "]";
-                    
-                    String indentacion = "  ".repeat(profundidad);
-                    String simbolo = "▼";
-                    System.out.println(indentacion + simbolo + " Prof:" + profundidad +
-                            " Mov:(" + i + "," + j + ") " +
-                            "Jugador:" + oponente + extra);
-                    imprimirTableroCompacto(nuevo, indentacion);
+                    System.out.println("Mov:(" + pos.fila + "," + pos.col + ") Jugador:" + oponente);
+                    imprimirTableroCompacto(nuevo, "");
+                    System.out.println("Heuristica: " + heuristica);
+                    System.out.println();
                 }
 
-                int valor = minimax(nuevo, profundidad + 1, true, jugador, oponente, i, j, mostrarTableros);
-
-                String extra = peor > valor ? "⬇️ PEOR" : "";
-                if (profundidad == 0) {
-                    String tipo = DetectorSimetria.clasificarMovimiento(i, j);
-                    extra += " [" + tipo + "]";
-                }
-                
-                // ✅ CAMBIO: Solo profundidad 0
-                if (!mostrarTableros || profundidad > 0) {
-                    VisualizadorArbolMejorado.imprimirNodo(profundidad, "MIN", i, j, oponente, valor, extra);
-                } else {
-                    String indentacion = "  ".repeat(profundidad);
-                    System.out.println(indentacion + "   → Valor: " + valor + (extra.isEmpty() ? "" : " " + extra));
-                }
-                
+                int valor = minimax(nuevo, profundidad + 1, true, jugador, oponente, pos.fila, pos.col, mostrarTableros);
                 peor = Math.min(peor, valor);
             }
             return peor;
@@ -139,78 +69,52 @@ public class Minimax {
         System.out.println();
     }
 
-    public static int[] mejorMovimiento(Tablero t, char jugador, char oponente, 
-                                       boolean visualizar, boolean mostrarTableros) {
-        if (visualizar) {
-            VisualizadorArbolMejorado.reiniciar();
-            VisualizadorArbolMejorado.setMostrarDetalles(true);
-            String titulo = "MINIMAX CON SIMETRÍA";
-            if (mostrarTableros) titulo += " + TABLEROS";
-            VisualizadorArbolMejorado.imprimirEncabezado(titulo);
-            DetectorSimetria.imprimirInfoSimetria(t);
-        }
+    public static int[] mejorMovimiento(Tablero t, char jugador, char oponente, boolean visualizar, boolean mostrarTableros) {
 
         int mejorValor = Integer.MIN_VALUE;
         int[] mejorMovimiento = {-1, -1};
-
-        if (visualizar) {
-            System.out.println("\n🔍 Evaluando movimientos posibles:");
-            if (mostrarTableros) {
-                System.out.println("   📊 Mostrando solo las opciones inmediatas de la IA");
-            }
-            System.out.println();
-        }
 
         java.util.List<DetectorSimetria.Posicion> movimientos = 
             DetectorSimetria.obtenerMovimientosUnicos(t);
 
         for (DetectorSimetria.Posicion pos : movimientos) {
-            int i = pos.fila;
-            int j = pos.col;
-            
             Tablero copia = new Tablero(t.getMatriz());
-            copia.hacerMovimiento(i, j, jugador);
+            copia.hacerMovimiento(pos.fila, pos.col, jugador);
 
             if (visualizar) {
-                String tipo = DetectorSimetria.clasificarMovimiento(i, j);
-                System.out.println("═══════════════════════════════════════════");
-                System.out.println("🎯 Explorando: (" + i + ", " + j + ") [" + tipo + "]");
-                System.out.println("═══════════════════════════════════════════");
+                System.out.println("----------------------------------------");
+                System.out.println("Explorando: (" + pos.fila + ", " + pos.col + ")");
+                System.out.println("----------------------------------------");
             }
 
-            int valor = minimax(copia, 0, false, jugador, oponente, i, j, mostrarTableros);
+            int valor = minimax(copia, 0, false, jugador, oponente, pos.fila, pos.col, mostrarTableros);
 
             if (visualizar) {
-                String tipo = DetectorSimetria.clasificarMovimiento(i, j);
-                System.out.println("\n📌 Resultado movimiento (" + i + ", " + j + ") [" + tipo + "]: " + valor +
-                        (valor > mejorValor ? " ⭐ NUEVO MEJOR" : ""));
+                System.out.println("Resultado movimiento (" + pos.fila + ", " + pos.col + ")");
+                System.out.println("   Valor despues de analisis: " + valor);
                 System.out.println();
             }
 
             if (valor > mejorValor) {
                 mejorValor = valor;
-                mejorMovimiento[0] = i;
-                mejorMovimiento[1] = j;
+                mejorMovimiento[0] = pos.fila;
+                mejorMovimiento[1] = pos.col;
             }
         }
 
-        if (visualizar) {
-            VisualizadorArbolMejorado.imprimirResumen();
-        }
-
+        System.out.println("Opcion escogida: (" + mejorMovimiento[0] + ", " + mejorMovimiento[1] + ")");
         return mejorMovimiento;
     }
 
     public static int[] mejorMovimiento(Tablero t, char jugador, char oponente, boolean visualizar) {
-        return mejorMovimiento(t, jugador, oponente, visualizar, false);
+        return mejorMovimiento(t, jugador, oponente, visualizar, true);
     }
 
     public static int[] mejorMovimiento(Tablero t, char jugador, char oponente) {
-        return mejorMovimiento(t, jugador, oponente, false, false);
+        return mejorMovimiento(t, jugador, oponente, false, true);
     }
 
-    public static int minimax(Tablero estado, int profundidad, boolean esMax,
-                              char jugador, char oponente, int filaJugada, int colJugada) {
-        return minimax(estado, profundidad, esMax, jugador, oponente, filaJugada, colJugada, false);
+    public static int minimax(Tablero estado, int profundidad, boolean esMax, char jugador, char oponente, int filaJugada, int colJugada) {
+        return minimax(estado, profundidad, esMax, jugador, oponente, filaJugada, colJugada, true);
     }
 }
