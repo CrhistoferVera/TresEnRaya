@@ -8,7 +8,6 @@ import java.awt.GridLayout;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -25,7 +24,7 @@ import org.tresenraya.model.Minimax;
 import org.tresenraya.model.Tablero;
 
 /**
- * Interfaz gráfica - Sin botón "Ver Árbol Actual"
+ * Interfaz gráfica con visualización del árbol de decisión en la UI
  */
 public class JuegoGUI extends JFrame {
     private Tablero tablero;
@@ -38,6 +37,7 @@ public class JuegoGUI extends JFrame {
     private JLabel lblEstado;
     private JLabel lblEstadisticas;
     private JTextArea txtLog;
+    private JTextArea txtArbol; // NUEVO: Área para mostrar el árbol
     private JPanel panelTablero;
 
     private int nodosExplorados = 0;
@@ -53,7 +53,7 @@ public class JuegoGUI extends JFrame {
     private void configurarVentana() {
         setTitle("Tres en Raya - IA con Minimax/Alfa-Beta + Simetria");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(900, 700);
+        setSize(1200, 800); // Ventana más grande
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
 
@@ -75,15 +75,21 @@ public class JuegoGUI extends JFrame {
         panelTablero = new JPanel(new GridLayout(3, 3, 5, 5));
         panelTablero.setBorder(BorderFactory.createEmptyBorder(10, 50, 10, 50));
         panelTablero.setBackground(new Color(236, 240, 241));
+        panelTablero.setPreferredSize(new Dimension(400, 400));
 
         botones = new JButton[3][3];
         inicializarBotones();
 
-        // Panel derecho - Log y controles
+        // Panel derecho - Log y árbol
         JPanel panelDerecho = new JPanel(new BorderLayout(5, 5));
         panelDerecho.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 10));
-        panelDerecho.setPreferredSize(new Dimension(300, 0));
+        panelDerecho.setPreferredSize(new Dimension(700, 0));
 
+        // Dividir el panel derecho en dos secciones
+        JPanel panelSuperiorDerecho = new JPanel(new BorderLayout(5, 5));
+        JPanel panelInferiorDerecho = new JPanel(new BorderLayout(5, 5));
+
+        // Sección de Log
         JLabel lblLog = new JLabel("Registro del Juego");
         lblLog.setFont(new Font("Arial", Font.BOLD, 14));
 
@@ -93,7 +99,27 @@ public class JuegoGUI extends JFrame {
         txtLog.setLineWrap(true);
         txtLog.setWrapStyleWord(true);
         JScrollPane scrollLog = new JScrollPane(txtLog);
+        scrollLog.setPreferredSize(new Dimension(0, 150));
 
+        panelSuperiorDerecho.add(lblLog, BorderLayout.NORTH);
+        panelSuperiorDerecho.add(scrollLog, BorderLayout.CENTER);
+
+        // NUEVO: Sección del Árbol de Decisión
+        JLabel lblArbol = new JLabel("🌳 Árbol de Decisión (Última jugada IA)");
+        lblArbol.setFont(new Font("Arial", Font.BOLD, 14));
+        lblArbol.setForeground(new Color(41, 128, 185));
+
+        txtArbol = new JTextArea();
+        txtArbol.setEditable(false);
+        txtArbol.setFont(new Font("Monospaced", Font.PLAIN, 10));
+        txtArbol.setLineWrap(false);
+        txtArbol.setBackground(new Color(250, 250, 250));
+        JScrollPane scrollArbol = new JScrollPane(txtArbol);
+
+        panelInferiorDerecho.add(lblArbol, BorderLayout.NORTH);
+        panelInferiorDerecho.add(scrollArbol, BorderLayout.CENTER);
+
+        // Botones de control
         JPanel panelBotones = new JPanel(new GridLayout(2, 1, 5, 5));
 
         JButton btnNuevoJuego = new JButton("Nuevo Juego");
@@ -105,14 +131,17 @@ public class JuegoGUI extends JFrame {
         panelBotones.add(btnNuevoJuego);
         panelBotones.add(btnSalir);
 
-        panelDerecho.add(lblLog, BorderLayout.NORTH);
-        panelDerecho.add(scrollLog, BorderLayout.CENTER);
-        panelDerecho.add(panelBotones, BorderLayout.SOUTH);
+        panelInferiorDerecho.add(panelBotones, BorderLayout.SOUTH);
+
+        // Combinar paneles derechos
+        JPanel panelDerechoCompleto = new JPanel(new GridLayout(2, 1, 5, 5));
+        panelDerechoCompleto.add(panelSuperiorDerecho);
+        panelDerechoCompleto.add(panelInferiorDerecho);
 
         // Agregar todo
         add(panelSuperior, BorderLayout.NORTH);
         add(panelTablero, BorderLayout.CENTER);
-        add(panelDerecho, BorderLayout.EAST);
+        add(panelDerechoCompleto, BorderLayout.EAST);
     }
 
     private void inicializarBotones() {
@@ -192,6 +221,9 @@ public class JuegoGUI extends JFrame {
         actualizarTablero();
         actualizarEstado();
 
+        // Limpiar el área del árbol
+        txtArbol.setText("El árbol de decisión se mostrará aquí cuando la IA juegue");
+
         if (!turnoHumano) {
             Timer timer = new Timer(500, e -> {
                 jugarIA();
@@ -236,15 +268,22 @@ public class JuegoGUI extends JFrame {
         agregarLog("\nTurno de la IA...");
         lblEstado.setText("La IA esta pensando...");
 
+        // NUEVO: Capturar la salida del árbol
+        StringBuilder arbolTexto = new StringBuilder();
+
         long inicio = System.currentTimeMillis();
         int[] mov;
 
         if (algoritmo.equals("minimax")) {
             mov = Minimax.mejorMovimiento(tablero, jugadorIA, jugadorHumano,
                     true, true);
+            arbolTexto.append("MINIMAX - Sin información de árbol disponible\n");
+            arbolTexto.append("(El árbol detallado solo está disponible con Alfa-Beta)");
         } else {
-            mov = AlfaBeta.mejorMovimientoAlfaBeta(tablero, jugadorIA, jugadorHumano,
-                    true, true, true);
+            // Capturar la salida de Alfa-Beta
+            mov = AlfaBeta.mejorMovimientoAlfaBetaConCaptura(
+                    tablero, jugadorIA, jugadorHumano,
+                    true, true, true, arbolTexto);
         }
 
         long tiempo = System.currentTimeMillis() - inicio;
@@ -255,6 +294,10 @@ public class JuegoGUI extends JFrame {
 
         agregarLog("IA jugo en (" + mov[0] + ", " + mov[1] + ")");
         agregarLog("   Tiempo: " + tiempo + " ms");
+
+        // NUEVO: Mostrar el árbol en la UI
+        txtArbol.setText(arbolTexto.toString());
+        txtArbol.setCaretPosition(0); // Scroll al inicio
 
         actualizarTablero();
 
@@ -370,6 +413,7 @@ public class JuegoGUI extends JFrame {
 
     private void nuevoJuego() {
         txtLog.setText("");
+        txtArbol.setText("");
         limpiarBotones();
         mostrarConfiguracionInicial();
     }
