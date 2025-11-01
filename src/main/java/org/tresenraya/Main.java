@@ -26,7 +26,7 @@ public class Main {
                 case 1:
                     System.out.println("\n🖥️  Iniciando interfaz gráfica...\n");
                     javax.swing.SwingUtilities.invokeLater(() -> {
-                        new JuegoGUI();
+                        new JuegoGUI2();
                     });
                     System.out.println("✅ Ventana de juego abierta");
                     System.out.println("🌳 El árbol se mostrará automáticamente después de cada jugada de la IA");

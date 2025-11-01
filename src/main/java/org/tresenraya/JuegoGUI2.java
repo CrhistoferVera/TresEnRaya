@@ -26,7 +26,7 @@ import org.tresenraya.model.Tablero;
 /**
  * Interfaz gráfica con visualización del árbol de decisión en la UI
  */
-public class JuegoGUI extends JFrame {
+public class JuegoGUI2 extends JFrame {
     private Tablero tablero;
     private char jugadorHumano;
     private char jugadorIA;
@@ -45,7 +45,7 @@ public class JuegoGUI extends JFrame {
     private long tiempoTotal = 0;
     private int movimientos = 0;
 
-    public JuegoGUI() {
+    public JuegoGUI2() {
         configurarVentana();
         mostrarConfiguracionInicial();
     }
@@ -447,7 +447,7 @@ public class JuegoGUI extends JFrame {
         }
 
         SwingUtilities.invokeLater(() -> {
-            new JuegoGUI();
+            new JuegoGUI2();
         });
     }
 }
