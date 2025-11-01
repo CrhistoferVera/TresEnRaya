@@ -1,35 +1,46 @@
 package org.tresenraya;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridLayout;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import javax.swing.UIManager;
+
 import org.tresenraya.model.AlfaBeta;
 import org.tresenraya.model.Minimax;
 import org.tresenraya.model.Tablero;
 import org.tresenraya.model.VisualizadorArbol;
-import org.tresenraya.model.PanelArbolDecision;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
- * Interfaz gráfica completa con visualización del árbol
+ * Interfaz gráfica con árbol de decisión AUTOMÁTICO
  */
 public class JuegoGUI extends JFrame {
     private Tablero tablero;
     private char jugadorHumano;
     private char jugadorIA;
     private String algoritmo;
-    private boolean mostrarArbol;
-    private boolean usarSimetria;
     private boolean turnoHumano;
+    private boolean mostrarArbolAutomatico = true; // NUEVO
 
     private JButton[][] botones;
     private JLabel lblEstado;
     private JLabel lblEstadisticas;
     private JTextArea txtLog;
     private JPanel panelTablero;
-    private PanelArbolDecision panelArbol;
-    private JTabbedPane tabbedPane;
 
     private int nodosExplorados = 0;
     private int nodosPoados = 0;
@@ -42,9 +53,9 @@ public class JuegoGUI extends JFrame {
     }
 
     private void configurarVentana() {
-        setTitle("🎮 Tres en Raya - IA con Minimax/Alfa-Beta");
+        setTitle("🎮 Tres en Raya - IA con Minimax/Alfa-Beta + Simetría");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1200, 750);
+        setSize(900, 700);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
 
@@ -62,46 +73,18 @@ public class JuegoGUI extends JFrame {
         panelSuperior.add(lblEstado);
         panelSuperior.add(lblEstadisticas);
 
-        // Panel izquierdo - Tablero y controles
-        JPanel panelIzquierdo = new JPanel(new BorderLayout(5, 5));
-        panelIzquierdo.setPreferredSize(new Dimension(400, 0));
-
+        // Panel central - Tablero
         panelTablero = new JPanel(new GridLayout(3, 3, 5, 5));
-        panelTablero.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        panelTablero.setBorder(BorderFactory.createEmptyBorder(10, 50, 10, 50));
         panelTablero.setBackground(new Color(236, 240, 241));
 
         botones = new JButton[3][3];
         inicializarBotones();
 
-        // Panel de botones de control
-        JPanel panelBotones = new JPanel(new GridLayout(3, 1, 5, 5));
-        panelBotones.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-
-        JButton btnNuevoJuego = new JButton("🔄 Nuevo Juego");
-        btnNuevoJuego.setFont(new Font("Arial", Font.BOLD, 14));
-        btnNuevoJuego.addActionListener(e -> nuevoJuego());
-
-        JButton btnVerArbol = new JButton("🌳 Toggle Árbol");
-        btnVerArbol.setFont(new Font("Arial", Font.BOLD, 14));
-        btnVerArbol.addActionListener(e -> toggleArbol());
-
-        JButton btnSalir = new JButton("❌ Salir");
-        btnSalir.setFont(new Font("Arial", Font.BOLD, 14));
-        btnSalir.addActionListener(e -> System.exit(0));
-
-        panelBotones.add(btnNuevoJuego);
-        panelBotones.add(btnVerArbol);
-        panelBotones.add(btnSalir);
-
-        panelIzquierdo.add(panelTablero, BorderLayout.CENTER);
-        panelIzquierdo.add(panelBotones, BorderLayout.SOUTH);
-
-        // Panel derecho - Pestañas con Log y Árbol
-        tabbedPane = new JTabbedPane();
-
-        // Pestaña de Log
-        JPanel panelLog = new JPanel(new BorderLayout(5, 5));
-        panelLog.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // Panel derecho - Log y controles
+        JPanel panelDerecho = new JPanel(new BorderLayout(5, 5));
+        panelDerecho.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 10));
+        panelDerecho.setPreferredSize(new Dimension(300, 0));
 
         JLabel lblLog = new JLabel("📊 Registro del Juego");
         lblLog.setFont(new Font("Arial", Font.BOLD, 14));
@@ -113,22 +96,37 @@ public class JuegoGUI extends JFrame {
         txtLog.setWrapStyleWord(true);
         JScrollPane scrollLog = new JScrollPane(txtLog);
 
-        panelLog.add(lblLog, BorderLayout.NORTH);
-        panelLog.add(scrollLog, BorderLayout.CENTER);
+        JPanel panelBotones = new JPanel(new GridLayout(4, 1, 5, 5));
 
-        // Pestaña del Árbol
-        panelArbol = new PanelArbolDecision();
-        JScrollPane scrollArbol = new JScrollPane(panelArbol);
-        scrollArbol.getVerticalScrollBar().setUnitIncrement(16);
-        scrollArbol.getHorizontalScrollBar().setUnitIncrement(16);
+        JButton btnNuevoJuego = new JButton("🔄 Nuevo Juego");
+        btnNuevoJuego.addActionListener(e -> nuevoJuego());
 
-        tabbedPane.addTab("📝 Registro", panelLog);
-        tabbedPane.addTab("🌳 Árbol", scrollArbol);
+        JButton btnVerArbol = new JButton("🌳 Ver Árbol Actual");
+        btnVerArbol.addActionListener(e -> mostrarArbolManual());
+
+        // NUEVO: Checkbox para árbol automático
+        JCheckBox chkArbolAuto = new JCheckBox("🌳 Árbol Automático", mostrarArbolAutomatico);
+        chkArbolAuto.addActionListener(e -> {
+            mostrarArbolAutomatico = chkArbolAuto.isSelected();
+            agregarLog("✅ Árbol automático: " + (mostrarArbolAutomatico ? "ACTIVADO" : "DESACTIVADO"));
+        });
+
+        JButton btnSalir = new JButton("❌ Salir");
+        btnSalir.addActionListener(e -> System.exit(0));
+
+        panelBotones.add(btnNuevoJuego);
+        panelBotones.add(btnVerArbol);
+        panelBotones.add(chkArbolAuto);
+        panelBotones.add(btnSalir);
+
+        panelDerecho.add(lblLog, BorderLayout.NORTH);
+        panelDerecho.add(scrollLog, BorderLayout.CENTER);
+        panelDerecho.add(panelBotones, BorderLayout.SOUTH);
 
         // Agregar todo
         add(panelSuperior, BorderLayout.NORTH);
-        add(panelIzquierdo, BorderLayout.WEST);
-        add(tabbedPane, BorderLayout.CENTER);
+        add(panelTablero, BorderLayout.CENTER);
+        add(panelDerecho, BorderLayout.EAST);
     }
 
     private void inicializarBotones() {
@@ -142,12 +140,9 @@ public class JuegoGUI extends JFrame {
                 final int fila = i;
                 final int col = j;
 
-                botones[i][j].addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        if (turnoHumano) {
-                            jugarHumano(fila, col);
-                        }
+                botones[i][j].addActionListener(e -> {
+                    if (turnoHumano) {
+                        jugarHumano(fila, col);
                     }
                 });
 
@@ -188,13 +183,13 @@ public class JuegoGUI extends JFrame {
 
         algoritmo = (eleccion == 0) ? "minimax" : "alfabeta";
 
-        // Mostrar árbol
+        // Preguntar sobre árbol automático
         eleccion = JOptionPane.showConfirmDialog(this,
-                "¿Mostrar árbol de decisión gráficamente?\n(Recomendado para aprender)",
+                "¿Mostrar árbol gráfico automáticamente después de cada jugada de la IA?",
                 "Configuración - Visualización",
                 JOptionPane.YES_NO_OPTION);
 
-        mostrarArbol = (eleccion == JOptionPane.YES_OPTION);
+        mostrarArbolAutomatico = (eleccion == JOptionPane.YES_OPTION);
 
         // Inicializar juego
         iniciarJuego();
@@ -202,8 +197,8 @@ public class JuegoGUI extends JFrame {
         agregarLog("✅ Configuración completa:");
         agregarLog("   Tu símbolo: " + jugadorHumano);
         agregarLog("   IA símbolo: " + jugadorIA);
-        agregarLog("   Algoritmo: " + algoritmo.toUpperCase());
-        agregarLog("   Visualización árbol: " + (mostrarArbol ? "Activada" : "Desactivada"));
+        agregarLog("   Algoritmo: " + algoritmo.toUpperCase() + " + SIMETRÍA");
+        agregarLog("   Árbol automático: " + (mostrarArbolAutomatico ? "SÍ" : "NO"));
         agregarLog("━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
         setVisible(true);
@@ -217,13 +212,10 @@ public class JuegoGUI extends JFrame {
         nodosPoados = 0;
         tiempoTotal = 0;
 
-        panelArbol.limpiar();
-
         actualizarTablero();
         actualizarEstado();
 
         if (!turnoHumano) {
-            // IA juega primero
             Timer timer = new Timer(500, e -> {
                 jugarIA();
                 ((Timer)e.getSource()).stop();
@@ -255,7 +247,6 @@ public class JuegoGUI extends JFrame {
         turnoHumano = false;
         actualizarEstado();
 
-        // IA juega después de un delay
         Timer timer = new Timer(800, e -> {
             jugarIA();
             ((Timer)e.getSource()).stop();
@@ -264,64 +255,76 @@ public class JuegoGUI extends JFrame {
         timer.start();
     }
 
-    private void jugarIA() {
-        agregarLog("\n🤖 Turno de la IA...");
-        lblEstado.setText("🤔 La IA está pensando...");
+private void jugarIA() {
+    agregarLog("\n🤖 Turno de la IA...");
+    lblEstado.setText("🤔 La IA está pensando...");
 
-        // Cambiar a la pestaña del árbol si está activa
-        if (mostrarArbol) {
-            tabbedPane.setSelectedIndex(1);
-        }
+    // SIEMPRE construir el árbol (para poder mostrarlo)
+    VisualizadorArbol.reiniciar();
 
-        long inicio = System.currentTimeMillis();
-        int[] mov;
+    long inicio = System.currentTimeMillis();
+    int[] mov;
 
-        if (algoritmo.equals("minimax")) {
-            mov = Minimax.mejorMovimiento(tablero, jugadorIA, jugadorHumano, true, mostrarArbol);
-        } else {
-            mov = AlfaBeta.mejorMovimientoAlfaBeta(tablero, jugadorIA, jugadorHumano, true, mostrarArbol);
-        }
+    // ⚠️ CAMBIO CRÍTICO: Activar mostrarTableros=true
+    if (algoritmo.equals("minimax")) {
+        mov = Minimax.mejorMovimiento(tablero, jugadorIA, jugadorHumano, 
+                                      true,   // visualizar
+                                      true);  // 🎯 mostrarTableros=TRUE
+    } else {
+        mov = AlfaBeta.mejorMovimientoAlfaBeta(tablero, jugadorIA, jugadorHumano, 
+                                                true,   // visualizar
+                                                true,   // usarSimetria
+                                                true);  // 🎯 mostrarTableros=TRUE
+    }
 
-        long tiempo = System.currentTimeMillis() - inicio;
-        tiempoTotal += tiempo;
+    long tiempo = System.currentTimeMillis() - inicio;
+    tiempoTotal += tiempo;
 
-        tablero.hacerMovimiento(mov[0], mov[1], jugadorIA);
-        movimientos++;
+    tablero.hacerMovimiento(mov[0], mov[1], jugadorIA);
+    movimientos++;
 
-        nodosExplorados = VisualizadorArbol.getNodosExplorados();
-        nodosPoados = VisualizadorArbol.getNodosPodados();
+    nodosExplorados = VisualizadorArbol.getNodosExplorados();
+    nodosPoados = VisualizadorArbol.getNodosPodados();
 
-        // Actualizar visualización del árbol
-        if (mostrarArbol) {
-            PanelArbolDecision.NodoArbol raiz = VisualizadorArbol.getRaizArbol();
-            panelArbol.setArbol(raiz, algoritmo, nodosExplorados, nodosPoados);
-        }
+    agregarLog("🤖 IA jugó en (" + mov[0] + ", " + mov[1] + ")");
+    agregarLog("   ⏱️ Tiempo: " + tiempo + " ms");
+    agregarLog("   📊 Nodos explorados: " + nodosExplorados);
+    if (nodosPoados > 0) {
+        agregarLog("   ✂️ Nodos podados: " + nodosPoados);
+    }
 
-        agregarLog("🤖 IA jugó en (" + mov[0] + ", " + mov[1] + ")");
-        agregarLog("   ⏱️ Tiempo: " + tiempo + " ms");
-        agregarLog("   📊 Nodos explorados: " + nodosExplorados);
-        if (nodosPoados > 0) {
-            agregarLog("   ✂️ Nodos podados: " + nodosPoados);
-            double eficiencia = (nodosPoados * 100.0) / (nodosExplorados + nodosPoados);
-            agregarLog("   📈 Eficiencia: " + String.format("%.1f%%", eficiencia));
-        }
+    actualizarTablero();
 
-        actualizarTablero();
-
-        if (verificarFinJuego()) return;
-
-        turnoHumano = true;
-        actualizarEstado();
-
-        // Volver a la pestaña de registro
-        Timer timer = new Timer(2000, e -> {
-            if (tabbedPane.getSelectedIndex() == 1) {
-                tabbedPane.setSelectedIndex(0);
-            }
+    // MOSTRAR ÁRBOL AUTOMÁTICAMENTE si está activado
+    if (mostrarArbolAutomatico) {
+        Timer timerArbol = new Timer(500, e -> {
+            mostrarArbolGrafico();
             ((Timer)e.getSource()).stop();
         });
-        timer.setRepeats(false);
-        timer.start();
+        timerArbol.setRepeats(false);
+        timerArbol.start();
+    }
+
+    if (verificarFinJuego()) return;
+
+    turnoHumano = true;
+    actualizarEstado();
+}
+    private void mostrarArbolGrafico() {
+        if (VisualizadorArbol.getRaiz() != null) {
+            VisualizadorArbolGrafico.mostrar(algoritmo + " + SIMETRÍA");
+        }
+    }
+
+    private void mostrarArbolManual() {
+        if (VisualizadorArbol.getRaiz() != null) {
+            VisualizadorArbolGrafico.mostrar(algoritmo + " + SIMETRÍA");
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Aún no hay árbol generado.\nLa IA debe jugar al menos una vez.",
+                    "Sin datos",
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
     }
 
     private void actualizarTablero() {
@@ -406,7 +409,7 @@ public class JuegoGUI extends JFrame {
                         "   Tiempo total IA: %d ms\n" +
                         "   Nodos explorados: %d\n" +
                         "   Nodos podados: %d\n" +
-                        "   Algoritmo: %s\n\n" +
+                        "   Algoritmo: %s + SIMETRÍA\n\n" +
                         "¿Quieres jugar otra partida?",
                 mensaje, movimientos, tiempoTotal, nodosExplorados, nodosPoados, algoritmo.toUpperCase()
         );
@@ -433,7 +436,6 @@ public class JuegoGUI extends JFrame {
     private void nuevoJuego() {
         txtLog.setText("");
         limpiarBotones();
-        panelArbol.limpiar();
         mostrarConfiguracionInicial();
     }
 
@@ -447,15 +449,6 @@ public class JuegoGUI extends JFrame {
         }
     }
 
-    private void toggleArbol() {
-        mostrarArbol = !mostrarArbol;
-        agregarLog((mostrarArbol ? "✅ Activada" : "❌ Desactivada") + " visualización del árbol");
-        JOptionPane.showMessageDialog(this,
-                "Visualización del árbol: " + (mostrarArbol ? "ACTIVADA" : "DESACTIVADA"),
-                "Configuración",
-                JOptionPane.INFORMATION_MESSAGE);
-    }
-
     private void agregarLog(String mensaje) {
         txtLog.append(mensaje + "\n");
         txtLog.setCaretPosition(txtLog.getDocument().getLength());
@@ -463,9 +456,9 @@ public class JuegoGUI extends JFrame {
 
     public static void main(String[] args) {
         System.out.println("╔═══════════════════════════════════════╗");
-        System.out.println("║    🎮 TRES EN RAYA - INTERFAZ GUI    ║");
-        System.out.println("║        IA con Minimax/Alfa-Beta       ║");
-        System.out.println("║      CON VISUALIZACIÓN DE ÁRBOL       ║");
+        System.out.println("║  🎮 TRES EN RAYA - INTERFAZ GUI    ║");
+        System.out.println("║   IA con Minimax/Alfa-Beta          ║");
+        System.out.println("║   + SIMETRÍA + TABLEROS VISUALES    ║");
         System.out.println("╚═══════════════════════════════════════╝\n");
 
         try {
