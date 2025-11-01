@@ -1,21 +1,28 @@
-// src/main/java/org/tresenraya/model/VisualizadorArbol.java
 package org.tresenraya.model;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
 
+/**
+ * VisualizadorArbol CORREGIDO
+ * ✅ Sistema con Stack que mantiene contexto correcto de padres
+ */
 public class VisualizadorArbol {
     private static int nodosExplorados = 0;
     private static int nodosPoados = 0;
     private static boolean mostrarDetalles = false;
     
     private static Nodo raiz;
-    private static Stack<Nodo> pilaActual = new Stack<>();
+    private static Stack<Nodo> pilaContexto = new Stack<>();
+    private static Map<Integer, Nodo> ultimoPorProfundidad = new HashMap<>();
 
     public static void reiniciar() {
         nodosExplorados = 0;
         nodosPoados = 0;
         raiz = null;
-        pilaActual.clear();
+        pilaContexto.clear();
+        ultimoPorProfundidad.clear();
     }
 
     public static void setMostrarDetalles(boolean mostrar) {
@@ -42,6 +49,9 @@ public class VisualizadorArbol {
         return raiz;
     }
 
+    /**
+     * ✅ CORREGIDO: Registra un nodo manteniendo el contexto de la pila
+     */
     public static void registrarNodo(int profundidad, String tipo, int fila, int col,
                                      char jugador, int valor, int alpha, int beta) {
         Nodo nodo = new Nodo(fila, col, jugador, tipo, profundidad);
@@ -49,30 +59,47 @@ public class VisualizadorArbol {
         nodo.setAlpha(alpha);
         nodo.setBeta(beta);
 
-        if (raiz == null) {
-            raiz = nodo;
-            pilaActual.push(nodo);
+        // Limpiar la pila hasta la profundidad correcta
+        while (!pilaContexto.isEmpty() && pilaContexto.peek().getProfundidad() >= profundidad) {
+            pilaContexto.pop();
+        }
+
+        if (profundidad == 0) {
+            // Nodo raíz de una rama principal
+            if (raiz == null) {
+                raiz = nodo;
+            }
+            pilaContexto.push(nodo);
         } else {
-            while (!pilaActual.isEmpty() && pilaActual.peek().getProfundidad() >= profundidad) {
-                pilaActual.pop();
+            // Buscar el padre correcto desde la pila
+            Nodo padre = null;
+            
+            if (!pilaContexto.isEmpty()) {
+                // El padre es el último nodo en la pila (debería ser profundidad-1)
+                padre = pilaContexto.peek();
+                
+                // Verificar que el padre tiene la profundidad correcta
+                if (padre.getProfundidad() == profundidad - 1) {
+                    padre.agregarHijo(nodo);
+                }
             }
             
-            if (!pilaActual.isEmpty()) {
-                pilaActual.peek().agregarHijo(nodo);
-            }
-            pilaActual.push(nodo);
+            pilaContexto.push(nodo);
         }
+        
+        // Actualizar el mapa de últimos nodos por profundidad
+        ultimoPorProfundidad.put(profundidad, nodo);
     }
 
     public static void marcarPodado() {
-        if (!pilaActual.isEmpty()) {
-            pilaActual.peek().setPodado(true);
+        if (!pilaContexto.isEmpty()) {
+            pilaContexto.peek().setPodado(true);
         }
     }
 
     public static void registrarTerminal(int profundidad, String resultado, int valor) {
-        if (!pilaActual.isEmpty()) {
-            Nodo nodo = pilaActual.peek();
+        if (!pilaContexto.isEmpty()) {
+            Nodo nodo = pilaContexto.peek();
             nodo.setTerminal(true);
             nodo.setEstadoTerminal(resultado);
             nodo.setValor(valor);
@@ -113,15 +140,50 @@ public class VisualizadorArbol {
     public static void imprimirResumen() {
         System.out.println("\n📊 ESTADÍSTICAS DEL ÁRBOL:");
         System.out.println("   Nodos explorados: " + nodosExplorados);
+        
+        // Contar nodos totales en el árbol
+        int totalNodos = contarNodos(raiz);
+        System.out.println("   Nodos en árbol visual: " + totalNodos);
         System.out.println("   Nodos podados: " + nodosPoados);
         System.out.println("   Eficiencia: " + (nodosPoados > 0 ?
                 String.format("%.1f%%", (nodosPoados * 100.0 / (nodosExplorados + nodosPoados))) :
                 "0%"));
+    }
+    
+    private static int contarNodos(Nodo nodo) {
+        if (nodo == null) return 0;
+        int count = 1;
+        for (Nodo hijo : nodo.getHijos()) {
+            count += contarNodos(hijo);
+        }
+        return count;
     }
 
     public static void imprimirEncabezado(String algoritmo) {
         System.out.println("\n" + "═".repeat(60));
         System.out.println("🌳 ÁRBOL DE DECISIÓN - " + algoritmo.toUpperCase());
         System.out.println("═".repeat(60));
+    }
+    
+    /**
+     * DEBUG: Imprime la estructura del árbol para verificar
+     */
+    public static void imprimirEstructuraArbol() {
+        System.out.println("\n🔍 DEBUG - Estructura del árbol:");
+        imprimirEstructuraRecursivo(raiz, 0);
+    }
+    
+    private static void imprimirEstructuraRecursivo(Nodo nodo, int nivel) {
+        if (nodo == null) return;
+        
+        String indent = "  ".repeat(nivel);
+        System.out.println(indent + "- Nodo Prof:" + nodo.getProfundidad() + 
+                         " Pos:(" + nodo.getFila() + "," + nodo.getColumna() + ")" +
+                         " Tipo:" + nodo.getTipo() + 
+                         " Hijos:" + nodo.getHijos().size());
+        
+        for (Nodo hijo : nodo.getHijos()) {
+            imprimirEstructuraRecursivo(hijo, nivel + 1);
+        }
     }
 }
