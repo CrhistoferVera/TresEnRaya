@@ -43,8 +43,7 @@ public class VisualizadorArbolMejorado {
         return raiz;
     }
 
-    public static void registrarNodo(int profundidad, String tipo, int fila, int col,
-                                     char jugador, int valor, int alpha, int beta) {
+    public static void registrarNodo(int profundidad, String tipo, int fila, int col, char jugador, int valor, int alpha, int beta) {
         Nodo nodo = new Nodo(fila, col, jugador, tipo, profundidad);
         nodo.setValor(valor);
         nodo.setAlpha(alpha);
@@ -122,8 +121,7 @@ public class VisualizadorArbolMejorado {
     /**
      * Versión mejorada que muestra el tablero
      */
-    public static void imprimirNodoConTablero(Tablero tablero, int profundidad, String tipo, 
-                                              int fila, int col, char jugador, int valor, String extra) {
+    public static void imprimirNodoConTablero(Tablero tablero, int profundidad, String tipo, int fila, int col, char jugador, int valor, String extra) {
         if (!mostrarDetalles) return;
 
         String indentacion = "  ".repeat(profundidad);
