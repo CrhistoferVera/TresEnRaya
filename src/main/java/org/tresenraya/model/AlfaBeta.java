@@ -10,7 +10,25 @@ public class AlfaBeta {
     // Profundidad 0 = IA juega
     // Profundidad 1 = Oponente responde → EVALUAR HEURÍSTICA
     private static final int PROFUNDIDAD_MAX = 1;
+private static Minimax.LogCallback logCallback = null;
 
+public static void setLogCallback(Minimax.LogCallback callback) {
+    logCallback = callback;
+}
+
+private static void println(String mensaje) {
+    System.out.println(mensaje);
+    if (logCallback != null) {
+        logCallback.log(mensaje + "\n");
+    }
+}
+
+private static void print(String mensaje) {
+    System.out.print(mensaje);
+    if (logCallback != null) {
+        logCallback.log(mensaje);
+    }
+}
     public static int alphabeta(Tablero estado, int profundidad, int alpha, int beta,
                                 boolean esMax, char jugador, char oponente, int filaJugada, int colJugada,
                                 boolean usarSimetria, boolean mostrarTableros) {

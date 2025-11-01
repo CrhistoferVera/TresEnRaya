@@ -1,4 +1,3 @@
-// src/main/java/org/tresenraya/model/Nodo.java
 package org.tresenraya.model;
 
 import java.util.ArrayList;
@@ -9,14 +8,14 @@ public class Nodo {
     private int columna;
     private char jugador;
     private int valor;
-    private String tipo; // "MAX" o "MIN"
+    private String tipo;
     private int profundidad;
     private List<Nodo> hijos;
     private boolean podado;
     private int alpha;
     private int beta;
     private boolean esTerminal;
-    private String estadoTerminal; // "Victoria X", "Empate", etc.
+    private String estadoTerminal; 
 
     public Nodo(int fila, int columna, char jugador, String tipo, int profundidad) {
         this.fila = fila;
