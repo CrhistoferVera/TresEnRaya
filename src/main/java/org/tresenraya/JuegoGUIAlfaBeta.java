@@ -183,20 +183,7 @@ public class JuegoGUIAlfaBeta extends JFrame {
         jugadorHumano = (eleccion == 0) ? 'X' : 'O';
         jugadorIA = (eleccion == 0) ? 'O' : 'X';
 
-        // Elegir algoritmo
-        String[] algoritmos = {"Minimax (explora todo)", "Alfa-Beta (con podas)"};
-        eleccion = JOptionPane.showOptionDialog(this,
-                "¿Que algoritmo debe usar la IA?",
-                "Configuracion - Algoritmo",
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                algoritmos,
-                algoritmos[1]);
-
-        if (eleccion == -1) System.exit(0);
-
-        algoritmo = (eleccion == 0) ? "minimax" : "alfabeta";
+        algoritmo = "alfabeta";
 
         // Inicializar juego
         iniciarJuego();
