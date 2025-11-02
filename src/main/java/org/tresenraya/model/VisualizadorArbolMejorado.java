@@ -82,9 +82,6 @@ public class VisualizadorArbolMejorado {
         }
     }
 
-    /**
-     * Imprime el tablero de forma compacta en una sola línea
-     */
     private static String tableroEnLinea(Tablero tablero) {
         char[][] matriz = tablero.getMatriz();
         StringBuilder sb = new StringBuilder();
@@ -101,9 +98,6 @@ public class VisualizadorArbolMejorado {
         return sb.toString();
     }
 
-    /**
-     * Imprime el tablero en formato multi-línea con indentación
-     */
     private static void imprimirTableroIndentado(Tablero tablero, String indentacion) {
         char[][] matriz = tablero.getMatriz();
         
@@ -118,30 +112,25 @@ public class VisualizadorArbolMejorado {
         }
     }
 
-    /**
-     * Versión mejorada que muestra el tablero
-     */
     public static void imprimirNodoConTablero(Tablero tablero, int profundidad, String tipo, int fila, int col, char jugador, int valor, String extra) {
         if (!mostrarDetalles) return;
 
         String indentacion = "  ".repeat(profundidad);
         String simbolo = tipo.equals("MAX") ? "▲" : "▼";
 
-        // Mostrar información del nodo
+     
         System.out.println(indentacion + simbolo + " Prof:" + profundidad +
                 " Mov:(" + fila + "," + col + ") " +
                 "Jugador:" + jugador +
                 " Valor:" + valor +
                 (extra.isEmpty() ? "" : " " + extra));
         
-        // Mostrar tablero en formato compacto multi-línea
         imprimirTableroIndentado(tablero, indentacion);
-        System.out.println(); // Línea en blanco para separación
+        System.out.println(); 
     }
 
     public static void imprimirNodo(int profundidad, String tipo, int fila, int col,
                                     char jugador, int valor, String extra) {
-        // ✅ CAMBIO: Solo imprimir si profundidad == 0
         if (!mostrarDetalles || profundidad > 0) return;
 
         String indentacion = "  ".repeat(profundidad);
@@ -155,7 +144,6 @@ public class VisualizadorArbolMejorado {
     }
 
     public static void imprimirPoda(int profundidad, String tipo, int alpha, int beta) {
-        // ✅ CAMBIO: Solo imprimir si profundidad == 0
         if (!mostrarDetalles || profundidad > 0) return;
 
         String indentacion = "  ".repeat(profundidad);
@@ -165,7 +153,6 @@ public class VisualizadorArbolMejorado {
     }
 
     public static void imprimirEstadoTerminal(int profundidad, String resultado, int valor) {
-        // ✅ CAMBIO: Solo imprimir si profundidad == 0
         if (!mostrarDetalles || profundidad > 0) return;
 
         String indentacion = "  ".repeat(profundidad);

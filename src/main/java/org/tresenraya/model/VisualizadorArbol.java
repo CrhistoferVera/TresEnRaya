@@ -3,11 +3,6 @@ package org.tresenraya.model;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
-
-/**
- * VisualizadorArbol CORREGIDO
- * ✅ Sistema con Stack que mantiene contexto correcto de padres
- */
 public class VisualizadorArbol {
     private static int nodosExplorados = 0;
     private static int nodosPoados = 0;
@@ -48,37 +43,25 @@ public class VisualizadorArbol {
     public static Nodo getRaiz() {
         return raiz;
     }
-
-    /**
-     * ✅ CORREGIDO: Registra un nodo manteniendo el contexto de la pila
-     */
-    public static void registrarNodo(int profundidad, String tipo, int fila, int col,
-                                     char jugador, int valor, int alpha, int beta) {
+    public static void registrarNodo(int profundidad, String tipo, int fila, int col, char jugador, int valor, int alpha, int beta) {
         Nodo nodo = new Nodo(fila, col, jugador, tipo, profundidad);
         nodo.setValor(valor);
         nodo.setAlpha(alpha);
         nodo.setBeta(beta);
-
-        // Limpiar la pila hasta la profundidad correcta
         while (!pilaContexto.isEmpty() && pilaContexto.peek().getProfundidad() >= profundidad) {
             pilaContexto.pop();
         }
 
         if (profundidad == 0) {
-            // Nodo raíz de una rama principal
             if (raiz == null) {
                 raiz = nodo;
             }
             pilaContexto.push(nodo);
         } else {
-            // Buscar el padre correcto desde la pila
             Nodo padre = null;
             
             if (!pilaContexto.isEmpty()) {
-                // El padre es el último nodo en la pila (debería ser profundidad-1)
                 padre = pilaContexto.peek();
-                
-                // Verificar que el padre tiene la profundidad correcta
                 if (padre.getProfundidad() == profundidad - 1) {
                     padre.agregarHijo(nodo);
                 }
@@ -86,8 +69,6 @@ public class VisualizadorArbol {
             
             pilaContexto.push(nodo);
         }
-        
-        // Actualizar el mapa de últimos nodos por profundidad
         ultimoPorProfundidad.put(profundidad, nodo);
     }
 
@@ -141,7 +122,6 @@ public class VisualizadorArbol {
         System.out.println("\n📊 ESTADÍSTICAS DEL ÁRBOL:");
         System.out.println("   Nodos explorados: " + nodosExplorados);
         
-        // Contar nodos totales en el árbol
         int totalNodos = contarNodos(raiz);
         System.out.println("   Nodos en árbol visual: " + totalNodos);
         System.out.println("   Nodos podados: " + nodosPoados);
@@ -164,10 +144,6 @@ public class VisualizadorArbol {
         System.out.println("🌳 ÁRBOL DE DECISIÓN - " + algoritmo.toUpperCase());
         System.out.println("═".repeat(60));
     }
-    
-    /**
-     * DEBUG: Imprime la estructura del árbol para verificar
-     */
     public static void imprimirEstructuraArbol() {
         System.out.println("\n🔍 DEBUG - Estructura del árbol:");
         imprimirEstructuraRecursivo(raiz, 0);
@@ -177,10 +153,7 @@ public class VisualizadorArbol {
         if (nodo == null) return;
         
         String indent = "  ".repeat(nivel);
-        System.out.println(indent + "- Nodo Prof:" + nodo.getProfundidad() + 
-                         " Pos:(" + nodo.getFila() + "," + nodo.getColumna() + ")" +
-                         " Tipo:" + nodo.getTipo() + 
-                         " Hijos:" + nodo.getHijos().size());
+        System.out.println(indent + "- Nodo Prof:" + nodo.getProfundidad() +  " Pos:(" + nodo.getFila() + "," + nodo.getColumna() + ")" + " Tipo:" + nodo.getTipo() +  " Hijos:" + nodo.getHijos().size());
         
         for (Nodo hijo : nodo.getHijos()) {
             imprimirEstructuraRecursivo(hijo, nivel + 1);

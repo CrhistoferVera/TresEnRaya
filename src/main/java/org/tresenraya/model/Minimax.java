@@ -3,6 +3,38 @@ package org.tresenraya.model;
 public class Minimax {
 
     private static final int PROFUNDIDAD_MAX = 1;
+    private static LogCallback logCallback = null;
+
+    /**
+     * Interface para capturar logs
+     */
+    public interface LogCallback {
+        void log(String mensaje);
+    }
+
+    /**
+     * Configura el callback de logs para la GUI
+     */
+    public static void setLogCallback(LogCallback callback) {
+        logCallback = callback;
+    }
+
+    /**
+     * Imprime tanto a consola como al callback
+     */
+    private static void println(String mensaje) {
+        System.out.println(mensaje);
+        if (logCallback != null) {
+            logCallback.log(mensaje + "\n");
+        }
+    }
+
+    private static void print(String mensaje) {
+        System.out.print(mensaje);
+        if (logCallback != null) {
+            logCallback.log(mensaje);
+        }
+    }
 
     public static int minimax(Tablero estado, int profundidad, boolean esMax, char jugador, char oponente, int filaJugada, int colJugada, boolean mostrarTableros) {
 
@@ -42,10 +74,10 @@ public class Minimax {
                 int heuristica = Evaluador.evaluar(nuevo, jugador, oponente);
 
                 if (mostrarTableros && profundidad == 0) {
-                    System.out.println("Mov:(" + pos.fila + "," + pos.col + ") Jugador:" + oponente);
+                    println("Mov:(" + pos.fila + "," + pos.col + ") Jugador:" + oponente);
                     imprimirTableroCompacto(nuevo, "");
-                    System.out.println("Heuristica: " + heuristica);
-                    System.out.println();
+                    println("Heuristica: " + heuristica);
+                    println("");
                 }
 
                 int valor = minimax(nuevo, profundidad + 1, true, jugador, oponente, pos.fila, pos.col, mostrarTableros);
@@ -58,15 +90,15 @@ public class Minimax {
     private static void imprimirTableroCompacto(Tablero tablero, String indentacion) {
         char[][] matriz = tablero.getMatriz();
         for (int i = 0; i < 3; i++) {
-            System.out.print(indentacion + "   ");
+            print(indentacion + "   ");
             for (int j = 0; j < 3; j++) {
                 char c = matriz[i][j];
-                System.out.print(c == '-' ? ' ' : Character.toLowerCase(c));
-                if (j < 2) System.out.print("|");
+                print(c == '-' ? " " : String.valueOf(Character.toLowerCase(c)));
+                if (j < 2) print("|");
             }
-            System.out.println();
+            println("");
         }
-        System.out.println();
+        println("");
     }
 
     public static int[] mejorMovimiento(Tablero t, char jugador, char oponente, boolean visualizar, boolean mostrarTableros) {
@@ -82,17 +114,17 @@ public class Minimax {
             copia.hacerMovimiento(pos.fila, pos.col, jugador);
 
             if (visualizar) {
-                System.out.println("----------------------------------------");
-                System.out.println("Explorando: (" + pos.fila + ", " + pos.col + ")");
-                System.out.println("----------------------------------------");
+                println("----------------------------------------");
+                println("Explorando: (" + pos.fila + ", " + pos.col + ")");
+                println("----------------------------------------");
             }
 
             int valor = minimax(copia, 0, false, jugador, oponente, pos.fila, pos.col, mostrarTableros);
 
             if (visualizar) {
-                System.out.println("Resultado movimiento (" + pos.fila + ", " + pos.col + ")");
-                System.out.println("   Valor despues de analisis: " + valor);
-                System.out.println();
+                println("Resultado movimiento (" + pos.fila + ", " + pos.col + ")");
+                println("   Valor despues de analisis: " + valor);
+                println("");
             }
 
             if (valor > mejorValor) {
@@ -102,7 +134,7 @@ public class Minimax {
             }
         }
 
-        System.out.println("Opcion escogida: (" + mejorMovimiento[0] + ", " + mejorMovimiento[1] + ")");
+        println("Opcion escogida: (" + mejorMovimiento[0] + ", " + mejorMovimiento[1] + ")");
         return mejorMovimiento;
     }
 

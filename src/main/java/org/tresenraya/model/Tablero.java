@@ -26,7 +26,6 @@ public class Tablero {
     }
 
     public boolean hayGanador(char jugador) {
-        // Filas, columnas o diagonales
         for (int i = 0; i < 3; i++) {
             if ((tablero[i][0] == jugador && tablero[i][1] == jugador && tablero[i][2] == jugador) ||
                     (tablero[0][i] == jugador && tablero[1][i] == jugador && tablero[2][i] == jugador))
