@@ -1,81 +1,60 @@
 package org.tresenraya.model;
 
 /**
- * Alfa-Beta con soporte para simetría y visualización de tableros
- * ✅ CORREGIDO: Profundidad limitada a 2 niveles y heurística correcta
+ * Alfa-Beta con visualización de tableros y captura de salida para UI
  */
 public class AlfaBeta {
 
-    // ✅ PROFUNDIDAD LIMITADA: Solo 2 movimientos (IA + oponente)
-    // Profundidad 0 = IA juega
-    // Profundidad 1 = Oponente responde → EVALUAR HEURÍSTICA
     private static final int PROFUNDIDAD_MAX = 1;
-private static Minimax.LogCallback logCallback = null;
+    private static int contadorNodos = 0;
+    private static int contadorPodas = 0;
+    private static StringBuilder capturaSalida = null; // Para capturar la salida
 
-public static void setLogCallback(Minimax.LogCallback callback) {
-    logCallback = callback;
-}
-
-private static void println(String mensaje) {
-    System.out.println(mensaje);
-    if (logCallback != null) {
-        logCallback.log(mensaje + "\n");
-    }
-}
-
-private static void print(String mensaje) {
-    System.out.print(mensaje);
-    if (logCallback != null) {
-        logCallback.log(mensaje);
-    }
-}
     public static int alphabeta(Tablero estado, int profundidad, int alpha, int beta,
                                 boolean esMax, char jugador, char oponente, int filaJugada, int colJugada,
                                 boolean usarSimetria, boolean mostrarTableros) {
 
-        VisualizadorArbolMejorado.incrementarNodos();
+        contadorNodos++;
+        String indent = "  ".repeat(profundidad);
 
         // Verificar estados terminales
         if (estado.hayGanador(jugador)) {
             int valor = 10 - profundidad;
-            VisualizadorArbolMejorado.imprimirEstadoTerminal(profundidad, "Victoria de " + jugador, valor);
             if (mostrarTableros && profundidad <= 1) {
-                String indentacion = "  ".repeat(profundidad);
-                imprimirTableroCompacto(estado, indentacion);
+                imprimirTableroMini(estado, indent);
+                imprimirLinea(indent + "    Victoria " + jugador + " = " + valor + "\n");
             }
             return valor;
         }
 
         if (estado.hayGanador(oponente)) {
             int valor = profundidad - 10;
-            VisualizadorArbolMejorado.imprimirEstadoTerminal(profundidad, "Victoria de " + oponente, valor);
             if (mostrarTableros && profundidad <= 1) {
-                String indentacion = "  ".repeat(profundidad);
-                imprimirTableroCompacto(estado, indentacion);
+                imprimirTableroMini(estado, indent);
+                imprimirLinea(indent + "    Victoria " + oponente + " = " + valor + "\n");
             }
             return valor;
         }
 
         if (estado.tableroLleno()) {
-            VisualizadorArbolMejorado.imprimirEstadoTerminal(profundidad, "Empate", 0);
             if (mostrarTableros && profundidad <= 1) {
-                String indentacion = "  ".repeat(profundidad);
-                imprimirTableroCompacto(estado, indentacion);
+                imprimirTableroMini(estado, indent);
+                imprimirLinea(indent + "    Empate = 0\n");
             }
             return 0;
         }
 
-        // ✅ LÍMITE DE PROFUNDIDAD: Detener en profundidad 2 y usar heurística
+        // Límite de profundidad
         if (profundidad >= PROFUNDIDAD_MAX) {
             int valorHeuristico = Evaluador.evaluar(estado, jugador, oponente);
             if (mostrarTableros && profundidad <= 1) {
-                String indentacion = "  ".repeat(profundidad);
-                System.out.println(indentacion + "🔍 Heurística: " + valorHeuristico);
+                imprimirTableroMini(estado, indent);
+                imprimirLinea(indent + "    H = " + valorHeuristico + "\n");
             }
             return valorHeuristico;
         }
 
-        // Obtener movimientos (con o sin simetría)
+        // Obtener movimientos
         java.util.List<DetectorSimetria.Posicion> movimientos;
         if (usarSimetria) {
             movimientos = DetectorSimetria.obtenerMovimientosUnicos(estado);
@@ -85,139 +64,92 @@ private static void print(String mensaje) {
 
         if (esMax) {
             int mejor = Integer.MIN_VALUE;
-            for (DetectorSimetria.Posicion pos : movimientos) {
-                int i = pos.fila;
-                int j = pos.col;
-                
+
+            for (int i = 0; i < movimientos.size(); i++) {
+                DetectorSimetria.Posicion pos = movimientos.get(i);
                 Tablero nuevo = new Tablero(estado.getMatriz());
-                nuevo.hacerMovimiento(i, j, jugador);
-
-                // Calcular heurística ANTES de mostrar
-                int heuristica = Evaluador.evaluar(nuevo, jugador, oponente);
-
-                // MOSTRAR TABLERO ANTES de la recursión si profundidad <= 1
-                if (mostrarTableros && profundidad <= 1) {
-                    String extra = "α=" + alpha + " β=" + beta + " H=" + heuristica;
-                    if (usarSimetria && profundidad == 0) {
-                        String tipo = DetectorSimetria.clasificarMovimiento(i, j);
-                        extra += " [" + tipo + "]";
-                    }
-                    
-                    String indentacion = "  ".repeat(profundidad);
-                    String simbolo = "▲";
-                    System.out.println(indentacion + simbolo + " Prof:" + profundidad +
-                            " Mov:(" + i + "," + j + ") " +
-                            "Jugador:" + jugador + " " + extra);
-                    imprimirTableroCompacto(nuevo, indentacion);
-                }
+                nuevo.hacerMovimiento(pos.fila, pos.col, jugador);
 
                 int valor = alphabeta(nuevo, profundidad + 1, alpha, beta, false,
-                        jugador, oponente, i, j, usarSimetria, mostrarTableros);
+                        jugador, oponente, pos.fila, pos.col, usarSimetria, mostrarTableros);
 
-                String extra = "α=" + alpha + " β=" + beta + " H=" + heuristica;
-                if (mejor < valor) extra += " ⬆️ MEJOR";
-                if (usarSimetria && profundidad == 0) {
-                    String tipo = DetectorSimetria.clasificarMovimiento(i, j);
-                    extra += " [" + tipo + "]";
+                if (valor > mejor) {
+                    mejor = valor;
                 }
 
-                // Solo imprimir info del nodo (sin tablero) si profundidad > 1 o sin mostrarTableros
-                if (!mostrarTableros || profundidad > 1) {
-                    VisualizadorArbolMejorado.imprimirNodo(profundidad, "MAX", i, j, jugador, valor, extra);
-                } else {
-                    // Ya mostramos el tablero, solo mostrar el valor
-                    String indentacion = "  ".repeat(profundidad);
-                    System.out.println(indentacion + "   → H=" + heuristica + " (Valor: " + valor + ")" + 
-                                     (mejor < valor ? " ⬆️ MEJOR" : ""));
-                }
-
-                // Registrar para visualización gráfica
-                VisualizadorArbol.registrarNodo(profundidad, "MAX", i, j, jugador, valor, alpha, beta);
-
-                mejor = Math.max(mejor, valor);
                 alpha = Math.max(alpha, mejor);
 
                 if (beta <= alpha) {
-                    VisualizadorArbolMejorado.imprimirPoda(profundidad, "BETA", alpha, beta);
-                    break; // poda beta
+                    contadorPodas++;
+                    if (mostrarTableros && profundidad == 0) {
+                        imprimirLinea("      ✂️ PODA (β≤α)\n");
+                    }
+                    break;
                 }
             }
+
             return mejor;
+
         } else {
             int peor = Integer.MAX_VALUE;
-            for (DetectorSimetria.Posicion pos : movimientos) {
-                int i = pos.fila;
-                int j = pos.col;
-                
+
+            for (int i = 0; i < movimientos.size(); i++) {
+                DetectorSimetria.Posicion pos = movimientos.get(i);
                 Tablero nuevo = new Tablero(estado.getMatriz());
-                nuevo.hacerMovimiento(i, j, oponente);
-
-                // Calcular heurística ANTES de mostrar
-                int heuristica = Evaluador.evaluar(nuevo, jugador, oponente);
-
-                // MOSTRAR TABLERO ANTES de la recursión si profundidad <= 1
-                if (mostrarTableros && profundidad <= 1) {
-                    String extra = "α=" + alpha + " β=" + beta + " H=" + heuristica;
-                    if (usarSimetria && profundidad == 0) {
-                        String tipo = DetectorSimetria.clasificarMovimiento(i, j);
-                        extra += " [" + tipo + "]";
-                    }
-                    
-                    String indentacion = "  ".repeat(profundidad);
-                    String simbolo = "▼";
-                    System.out.println(indentacion + simbolo + " Prof:" + profundidad +
-                            " Mov:(" + i + "," + j + ") " +
-                            "Jugador:" + oponente + " " + extra);
-                    imprimirTableroCompacto(nuevo, indentacion);
-                }
+                nuevo.hacerMovimiento(pos.fila, pos.col, oponente);
 
                 int valor = alphabeta(nuevo, profundidad + 1, alpha, beta, true,
-                        jugador, oponente, i, j, usarSimetria, mostrarTableros);
+                        jugador, oponente, pos.fila, pos.col, usarSimetria, mostrarTableros);
 
-                String extra = "α=" + alpha + " β=" + beta + " H=" + heuristica;
-                if (peor > valor) extra += " ⬇️ PEOR";
-                if (usarSimetria && profundidad == 0) {
-                    String tipo = DetectorSimetria.clasificarMovimiento(i, j);
-                    extra += " [" + tipo + "]";
+                if (valor < peor) {
+                    peor = valor;
                 }
 
-                // Solo imprimir info del nodo (sin tablero) si profundidad > 1 o sin mostrarTableros
-                if (!mostrarTableros || profundidad > 1) {
-                    VisualizadorArbolMejorado.imprimirNodo(profundidad, "MIN", i, j, oponente, valor, extra);
-                } else {
-                    // Ya mostramos el tablero, solo mostrar el valor
-                    String indentacion = "  ".repeat(profundidad);
-                    System.out.println(indentacion + "   → H=" + heuristica + " (Valor: " + valor + ")" + 
-                                     (peor > valor ? " ⬇️ PEOR" : ""));
-                }
-
-                // Registrar para visualización gráfica
-                VisualizadorArbol.registrarNodo(profundidad, "MIN", i, j, oponente, valor, alpha, beta);
-
-                peor = Math.min(peor, valor);
                 beta = Math.min(beta, peor);
 
                 if (beta <= alpha) {
-                    VisualizadorArbolMejorado.imprimirPoda(profundidad, "ALPHA", alpha, beta);
-                    break; // poda alfa
+                    contadorPodas++;
+                    if (mostrarTableros && profundidad == 0) {
+                        imprimirLinea("      ✂️ PODA (β≤α)\n");
+                    }
+                    break;
                 }
             }
+
             return peor;
         }
     }
 
-    private static void imprimirTableroCompacto(Tablero tablero, String indentacion) {
-        char[][] matriz = tablero.getMatriz();
+    private static void imprimirTableroMini(Tablero tablero, String indent) {
+        char[][] m = tablero.getMatriz();
+        imprimirLinea(indent + "    ┌───┐");
         for (int i = 0; i < 3; i++) {
-            System.out.print(indentacion + "   ");
+            StringBuilder linea = new StringBuilder(indent + "    │");
             for (int j = 0; j < 3; j++) {
-                char c = matriz[i][j];
-                System.out.print(c == '-' ? ' ' : Character.toLowerCase(c));
-                if (j < 2) System.out.print("|");
+                char c = m[i][j];
+                linea.append(c == '-' ? ' ' : c);
             }
-            System.out.println();
+            linea.append("│");
+            imprimirLinea(linea.toString());
         }
-        System.out.println();
+        imprimirLinea(indent + "    └───┘");
+    }
+
+    // Método auxiliar para imprimir (consola o captura)
+    private static void imprimirLinea(String texto) {
+        if (capturaSalida != null) {
+            capturaSalida.append(texto).append("\n");
+        } else {
+            System.out.println(texto);
+        }
+    }
+
+    private static void imprimir(String texto) {
+        if (capturaSalida != null) {
+            capturaSalida.append(texto);
+        } else {
+            System.out.print(texto);
+        }
     }
 
     private static java.util.List<DetectorSimetria.Posicion> obtenerTodosMovimientos(Tablero estado) {
@@ -232,34 +164,28 @@ private static void print(String mensaje) {
         return movimientos;
     }
 
-    // MÉTODO PRINCIPAL - Con todas las opciones
-    public static int[] mejorMovimientoAlfaBeta(Tablero t, char jugador, char oponente, 
-                                                 boolean visualizar, boolean usarSimetria,
-                                                 boolean mostrarTableros) {
+    public static int[] mejorMovimientoAlfaBeta(Tablero t, char jugador, char oponente,
+                                                boolean visualizar, boolean usarSimetria,
+                                                boolean mostrarTableros) {
+        contadorNodos = 0;
+        contadorPodas = 0;
+
         if (visualizar) {
-            VisualizadorArbol.reiniciar();
-            VisualizadorArbolMejorado.reiniciar();
-            VisualizadorArbolMejorado.setMostrarDetalles(true);
-            String titulo = "ALFA-BETA (Profundidad " + PROFUNDIDAD_MAX + ")";
-            if (usarSimetria) titulo += " CON SIMETRÍA";
-            if (mostrarTableros) titulo += " + TABLEROS";
-            VisualizadorArbolMejorado.imprimirEncabezado(titulo);
-            
+            imprimirLinea("\n═══════════════════════════════════════");
+            imprimirLinea("    🌳 PODA ALFA-BETA");
+            imprimirLinea("═══════════════════════════════════════");
+            imprimirLinea("Jugador IA: " + jugador + " (MAX)");
+            imprimirLinea("Oponente: " + oponente + " (MIN)");
             if (usarSimetria) {
-                DetectorSimetria.imprimirInfoSimetria(t);
+                java.util.List<DetectorSimetria.Posicion> movs =
+                        DetectorSimetria.obtenerMovimientosUnicos(t);
+                imprimirLinea("Movimientos únicos: " + movs.size() + " (simetría)");
             }
+            imprimirLinea("─────────────────────────────────────────\n");
         }
 
         int mejorValor = Integer.MIN_VALUE;
         int[] mejorMovimiento = {-1, -1};
-
-        System.out.println("\n🔍 Evaluando movimientos posibles con poda Alfa-Beta:");
-        if (mostrarTableros) {
-            System.out.println("   📊 Profundidad 0: Opciones de IA (con heurística)");
-            System.out.println("   📊 Profundidad 1: Respuestas del oponente");
-            System.out.println("   📊 Profundidad 2: Evaluar con heurística");
-        }
-        System.out.println();
 
         java.util.List<DetectorSimetria.Posicion> movimientos;
         if (usarSimetria) {
@@ -268,67 +194,80 @@ private static void print(String mensaje) {
             movimientos = obtenerTodosMovimientos(t);
         }
 
+        int numOpcion = 1;
         for (DetectorSimetria.Posicion pos : movimientos) {
             int i = pos.fila;
             int j = pos.col;
-            
+
             Tablero copia = new Tablero(t.getMatriz());
             copia.hacerMovimiento(i, j, jugador);
 
-            if (visualizar) {
-                String tipo = usarSimetria ? " [" + DetectorSimetria.clasificarMovimiento(i, j) + "]" : "";
-                System.out.println("╔════════════════════════════════════════╗");
-                System.out.println("🎯 Explorando: (" + i + ", " + j + ")" + tipo);
-                System.out.println("╚════════════════════════════════════════╝");
-            }
+            // Mostrar el movimiento a evaluar
+            String tipo = usarSimetria ? " [" + DetectorSimetria.clasificarMovimiento(i, j) + "]" : "";
+            imprimirLinea("  Opción " + numOpcion + ": (" + i + "," + j + ")" + tipo);
+
+            // Mostrar el tablero resultante
+            imprimirTableroMini(copia, "");
+            imprimirLinea("    α=-∞ β=+∞");
+            imprimirLinea("");
 
             int valor = alphabeta(copia, 0, Integer.MIN_VALUE, Integer.MAX_VALUE,
                     false, jugador, oponente, i, j, usarSimetria, mostrarTableros);
 
-            String tipo = usarSimetria ? " [" + DetectorSimetria.clasificarMovimiento(i, j) + "]" : "";
-            int heuristica = Evaluador.evaluar(copia, jugador, oponente);
-            System.out.println("\n📌 Resultado movimiento (" + i + ", " + j + ")" + tipo);
-            System.out.println("   Heurística inmediata: " + heuristica);
-            System.out.println("   Valor después de análisis: " + valor +
-                    (valor > mejorValor ? " ⭐ NUEVO MEJOR" : ""));
-            System.out.println();
+            imprimirLinea("    → Valor final: " + valor);
 
             if (valor > mejorValor) {
+                imprimirLinea("    ⭐ Mejor opción hasta ahora");
                 mejorValor = valor;
                 mejorMovimiento[0] = i;
                 mejorMovimiento[1] = j;
             }
+            imprimirLinea("");
+            numOpcion++;
         }
 
         if (visualizar) {
-            VisualizadorArbolMejorado.imprimirResumen();
-            System.out.println("\n✅ Mejor movimiento: (" + mejorMovimiento[0] + ", " + mejorMovimiento[1] + 
-                             ") con valor " + mejorValor);
+            imprimirLinea("─────────────────────────────────────────");
+            imprimirLinea("📊 Nodos: " + contadorNodos + " | Podas: " + contadorPodas);
+            if (contadorPodas > 0) {
+                imprimirLinea("⚡ Eficiencia: " +
+                        String.format("%.1f%%", (contadorPodas * 100.0 / contadorNodos)));
+            }
+            imprimirLinea("✅ Mejor: (" + mejorMovimiento[0] + "," + mejorMovimiento[1] +
+                    ") con valor " + mejorValor);
+            imprimirLinea("═══════════════════════════════════════\n");
         }
 
         return mejorMovimiento;
     }
 
-    // MÉTODOS DE COMPATIBILIDAD - Para código existente
-
-    // Versión con visualización, usa simetría por defecto
+    // Métodos de compatibilidad
     public static int[] mejorMovimientoAlfaBeta(Tablero t, char jugador, char oponente, boolean visualizar) {
-        return mejorMovimientoAlfaBeta(t, jugador, oponente, visualizar, true, false);
+        return mejorMovimientoAlfaBeta(t, jugador, oponente, visualizar, true, true);
     }
 
-    // Versión sin visualización
     public static int[] mejorMovimientoAlfaBeta(Tablero t, char jugador, char oponente) {
         return mejorMovimientoAlfaBeta(t, jugador, oponente, false, true, false);
     }
 
-    // Versión recursiva simple (para compatibilidad)
-    public static int alphabeta(Tablero estado, int profundidad, int alpha, int beta,
-                                boolean esMax, char jugador, char oponente, int filaJugada, int colJugada) {
-        return alphabeta(estado, profundidad, alpha, beta, esMax, jugador, oponente, 
-                        filaJugada, colJugada, false, false);
+    // NUEVO: Método que captura la salida en un StringBuilder
+    public static int[] mejorMovimientoAlfaBetaConCaptura(Tablero t, char jugador, char oponente,
+                                                          boolean visualizar, boolean usarSimetria,
+                                                          boolean mostrarTableros, StringBuilder salida) {
+        capturaSalida = salida;
+        try {
+            return mejorMovimientoAlfaBeta(t, jugador, oponente, visualizar, usarSimetria, mostrarTableros);
+        } finally {
+            capturaSalida = null; // Restaurar a impresión por consola
+        }
     }
 
-    // Versión sin parámetros de jugada
+    public static int alphabeta(Tablero estado, int profundidad, int alpha, int beta,
+                                boolean esMax, char jugador, char oponente, int filaJugada, int colJugada) {
+        return alphabeta(estado, profundidad, alpha, beta, esMax, jugador, oponente,
+                filaJugada, colJugada, false, false);
+    }
+
     public static int alphabeta(Tablero estado, int profundidad, int alpha, int beta,
                                 boolean esMax, char jugador, char oponente) {
         return alphabeta(estado, profundidad, alpha, beta, esMax, jugador, oponente, -1, -1, false, false);
