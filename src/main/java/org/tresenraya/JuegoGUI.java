@@ -231,7 +231,6 @@ public class JuegoGUI extends JFrame {
         };
 
         Minimax.setLogCallback(callback);
-        AlfaBeta.setLogCallback(callback);
         VisualizadorArbol.reiniciar();
 
         int[] mov;
@@ -253,7 +252,6 @@ public class JuegoGUI extends JFrame {
         actualizarTablero();
 
         Minimax.setLogCallback(null);
-        AlfaBeta.setLogCallback(null);
 
         if (verificarFinJuego()) return;
 
